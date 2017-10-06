@@ -8,6 +8,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,6 +28,23 @@ import statics.HelpA;
  * @author KOCMOC
  */
 public class JTableM extends JTable {
+
+    public synchronized void build_table_common(ResultSet rs, String q) {
+        //
+        if (rs == null) {
+            return;
+        }
+        //
+        HelpA.setTrackingToolTip(this, q);
+        //
+        try {
+            String[] headers = HelpA.getHeaders(rs);
+            Object[][] content = HelpA.getContent(rs);
+            this.setModel(new DefaultTableModel(content, headers));
+        } catch (SQLException ex) {
+            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public String jTableToCSV(JTable table, boolean writeToFile) {
         //
@@ -108,7 +127,7 @@ public class JTableM extends JTable {
         table.getTableHeader().setReorderingAllowed(false);
     }
 
-    public  ArrayList getLineValuesVisibleColsOnly_B(JTable table, int rowNr, String[] columnsToInclude) {
+    public ArrayList getLineValuesVisibleColsOnly_B(JTable table, int rowNr, String[] columnsToInclude) {
         ArrayList rowValues = new ArrayList();
         for (int x = 0; x < table.getColumnCount(); x++) {
             if (columnIsVisible(table, x)) {
