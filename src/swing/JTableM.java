@@ -4,10 +4,15 @@
  */
 package swing;
 
+import Exceptions.TableNameNotSpecifiedException;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,6 +21,9 @@ import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -27,7 +35,189 @@ import statics.HelpA;
  *
  * @author KOCMOC
  */
-public class JTableM extends JTable {
+public class JTableM extends JTable implements TableColumnModelListener {
+
+    private final String TABLE_NAME;
+    private ArrayList COL_WIDTH_LIST_SAVE;
+    private String COL_WIDTH_LIST_FILE_NAME;
+    private final static int NOT_LESS_THEN = 100;
+    private boolean SAVE_ALLOWED = false;
+    private int INITIAL_TIMEOUT = 200;
+
+    public JTableM(String tableName) {
+        //
+        this.TABLE_NAME = tableName;
+        //
+        COL_WIDTH_LIST_FILE_NAME = "col_widths_save__" + TABLE_NAME;
+        //
+        try {
+            colWidthsRestoreInit();
+        } catch (TableNameNotSpecifiedException ex) {
+            Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public String getTABLE_NAME() {
+        return TABLE_NAME;
+    }
+    
+    //==========================================================================
+
+    private void colWidthsRestoreInit() throws TableNameNotSpecifiedException {
+        //
+        if (TABLE_NAME == null || TABLE_NAME.isEmpty()) {
+            throw new TableNameNotSpecifiedException();
+        }
+        //
+        Thread x = new Thread(new ColumnCountWatcher());
+        x.start();
+    }
+
+    private void restore() {
+        COL_WIDTH_LIST_SAVE = restoreSaveListFromObject(COL_WIDTH_LIST_FILE_NAME);
+        restoreColumnWidths(COL_WIDTH_LIST_SAVE);
+    }
+
+    @Override
+    public void columnMarginChanged(ChangeEvent ce) {
+        //
+        if (COL_WIDTH_LIST_SAVE == null) {
+            COL_WIDTH_LIST_SAVE = new ArrayList();
+        }
+        //
+//        System.out.println("COL MARGIN CHANGED: ");
+        //
+        DefaultTableColumnModel dtcm = (DefaultTableColumnModel) ce.getSource();
+        JTable parentTable = null;
+        //
+        Object[] signers = dtcm.getColumnModelListeners();
+        //
+        for (Object object : signers) {
+            if (object instanceof JTable && parentTable == null) {
+                parentTable = (JTable) object;
+            }
+        }
+        //
+        if (parentTable instanceof JTableM && SAVE_ALLOWED) {
+            COL_WIDTH_LIST_SAVE = saveColumnWidths();
+
+
+        }
+    }
+
+    class ColumnCountWatcher implements Runnable {
+
+        private boolean run = true;
+
+        @Override
+        public void run() {
+            while (run) {
+                //
+                wait_(INITIAL_TIMEOUT);
+                //
+                if (getColumnCount() > 0 && getColumnWidthByIndex(1) > NOT_LESS_THEN) {
+                    run = false;
+                    restore();
+                    SAVE_ALLOWED = true;
+                }
+            }
+        }
+
+        private void wait_(int millis) {
+            synchronized (this) {
+                try {
+                    wait(millis);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ColumnCountWatcher.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    private ArrayList<Integer> saveColumnWidths() {
+        //
+        ArrayList<Integer> list = new ArrayList<>();
+        //
+        for (int i = 0; i < getColumnCount(); i++) {
+            list.add(getColumnWidthByIndex(i));
+        }
+        //
+        if (COL_WIDTH_LIST_SAVE.isEmpty()) {
+            return list;
+        }
+        //
+        if (verifyWidths(list)) {
+            objectToFile(COL_WIDTH_LIST_FILE_NAME, list);
+//            System.out.println("saved");
+            return list;
+        } else {
+            return COL_WIDTH_LIST_SAVE;
+        }
+        //
+    }
+
+    private ArrayList restoreSaveListFromObject(String fileName) {
+        try {
+            Object obj = fileToObject(fileName);
+            ArrayList colWidthList = (ArrayList) obj;
+            return colWidthList;
+        } catch (IOException | ClassNotFoundException ex) {
+            return new ArrayList();
+        }
+    }
+
+    private Object fileToObject(String path) throws IOException, ClassNotFoundException {
+        FileInputStream fas = new FileInputStream(path);
+        ObjectInputStream ois = new ObjectInputStream(fas);
+        Object obj = ois.readObject();
+        return obj;
+    }
+
+    private void restoreColumnWidths(ArrayList<Integer> list) {
+        //
+        if (list.isEmpty()) {
+            return;
+        }
+        //
+        for (int i = 0; i < getColumnCount(); i++) {
+            setColumnWidthByIndex(i, list.get(i));
+        }
+    }
+
+    private void objectToFile(String path, Object obj) {
+        try {
+            FileOutputStream fos = new FileOutputStream(path);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(obj);
+
+
+        } catch (Exception ex) {
+            Logger.getLogger(HelpA.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private boolean verifyWidths(ArrayList<Integer> list) {
+        //
+        int less = 0;
+        //
+        for (Integer i : list) {
+            if (i < NOT_LESS_THEN) {
+                less++;
+            }
+        }
+        //
+        if (less == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    //==========================================================================
+    
+    
+   
 
     public synchronized void build_table_common(ResultSet rs, String q) {
         //
@@ -41,16 +231,19 @@ public class JTableM extends JTable {
             String[] headers = HelpA.getHeaders(rs);
             Object[][] content = HelpA.getContent(rs);
             this.setModel(new DefaultTableModel(content, headers));
+
+
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpA.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public String jTableToCSV(JTable table, boolean writeToFile) {
+    public String jTableToCSV(boolean writeToFile) {
         //
         String csv = "";
         //
-        for (Object colName : getVisibleColumnsNames(this)) {
+        for (Object colName : getVisibleColumnsNames()) {
             csv += colName + ";";
         }
         //
@@ -58,7 +251,7 @@ public class JTableM extends JTable {
         //
         //
         for (int x = 0; x < this.getRowCount(); x++) {
-            for (Object rowValue : getLineValuesVisibleColsOnly(this, x)) {
+            for (Object rowValue : getLineValuesVisibleColsOnly(x)) {
                 csv += rowValue + ";";
             }
             csv += "\n";
@@ -72,27 +265,30 @@ public class JTableM extends JTable {
                 HelpA.writeToFile(path, csv);
 //                JOptionPane.showMessageDialog(null, "Export file ready, the file is in: " + path);
                 HelpA.run_application_with_associated_application(new File(path));
+
+
             } catch (IOException ex) {
-                Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(JTableM.class
+                        .getName()).log(Level.SEVERE, null, ex);
             }
         }
         //
         return csv;
     }
 
-    public String jTableToCSV(JTable table, boolean writeToFile, String[] columnsToInclude) {
+    public String jTableToCSV( boolean writeToFile, String[] columnsToInclude) {
         //
         String csv = "";
         //
-        for (Object colName : getVisibleColumnsNames_B(table, columnsToInclude)) {
+        for (Object colName : getVisibleColumnsNames_B(columnsToInclude)) {
             csv += colName + ";";
         }
         //
         csv += "\n";
         //
         //
-        for (int x = 0; x < table.getRowCount(); x++) {
-            for (Object rowValue : getLineValuesVisibleColsOnly_B(table, x, columnsToInclude)) {
+        for (int x = 0; x < getRowCount(); x++) {
+            for (Object rowValue : getLineValuesVisibleColsOnly_B(x, columnsToInclude)) {
                 csv += rowValue + ";";
             }
             csv += "\n";
@@ -106,8 +302,11 @@ public class JTableM extends JTable {
                 HelpA.writeToFile(path, csv);
 //                JOptionPane.showMessageDialog(null, "Export file ready, the file is in: " + path);
                 HelpA.run_application_with_associated_application(new File(path));
+
+
             } catch (IOException ex) {
-                Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(JTableM.class
+                        .getName()).log(Level.SEVERE, null, ex);
             }
         }
         //
@@ -122,17 +321,31 @@ public class JTableM extends JTable {
         }
         return false;
     }
-
-    public static void disableColumnDragging(JTable table) {
-        table.getTableHeader().setReorderingAllowed(false);
+    
+     public int getColumnWidthByIndex(int colIndex) {
+        return getColumnModel().getColumn(colIndex).getWidth();
     }
 
-    public ArrayList getLineValuesVisibleColsOnly_B(JTable table, int rowNr, String[] columnsToInclude) {
+    /**
+     *
+     * @param colIndex - starts from 0
+     * @param table
+     * @param width
+     */
+    public void setColumnWidthByIndex(int colIndex, int width) {
+        getColumnModel().getColumn(colIndex).setWidth(width);
+    }
+
+    public  void disableColumnDragging() {
+        getTableHeader().setReorderingAllowed(false);
+    }
+
+    public ArrayList getLineValuesVisibleColsOnly_B(int rowNr, String[] columnsToInclude) {
         ArrayList rowValues = new ArrayList();
-        for (int x = 0; x < table.getColumnCount(); x++) {
-            if (columnIsVisible(table, x)) {
-                String value = "" + table.getValueAt(rowNr, x);
-                if (exists_(getColumnNameByIndex(table, x), columnsToInclude)) {
+        for (int x = 0; x < getColumnCount(); x++) {
+            if (columnIsVisible(x)) {
+                String value = "" + getValueAt(rowNr, x);
+                if (exists_(getColumnNameByIndex(x), columnsToInclude)) {
                     rowValues.add(value);
                 }
             }
@@ -148,22 +361,22 @@ public class JTableM extends JTable {
      * @param rowNr
      * @return
      */
-    public static ArrayList getLineValuesVisibleColsOnly(JTable table, int rowNr) {
+    public  ArrayList getLineValuesVisibleColsOnly(int rowNr) {
         ArrayList rowValues = new ArrayList();
-        for (int x = 0; x < table.getColumnCount(); x++) {
-            if (columnIsVisible(table, x)) {
-                String value = "" + table.getValueAt(rowNr, x);
+        for (int x = 0; x < getColumnCount(); x++) {
+            if (columnIsVisible(x)) {
+                String value = "" + getValueAt(rowNr, x);
                 rowValues.add(value);
             }
         }
         return rowValues;
     }
 
-    public ArrayList getVisibleColumnsNames_B(JTable table, String[] columnsToInclude) {
+    public ArrayList getVisibleColumnsNames_B(String[] columnsToInclude) {
         ArrayList columnNames = new ArrayList();
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            if (columnIsVisible(table, i) && exists_(getColumnNameByIndex(table, i), columnsToInclude)) {
-                columnNames.add(getColumnNameByIndex(table, i));
+        for (int i = 0; i < getColumnCount(); i++) {
+            if (columnIsVisible(i) && exists_(getColumnNameByIndex(i), columnsToInclude)) {
+                columnNames.add(getColumnNameByIndex(i));
             }
         }
 
@@ -179,43 +392,43 @@ public class JTableM extends JTable {
         return columnNames;
     }
 
-    public ArrayList getVisibleColumnsNames(JTable table) {
+    public ArrayList getVisibleColumnsNames() {
         ArrayList columnNames = new ArrayList();
         for (int i = 0; i < this.getColumnCount(); i++) {
-            if (columnIsVisible(this, i)) {
-                columnNames.add(getColumnNameByIndex(this, i));
+            if (columnIsVisible(i)) {
+                columnNames.add(getColumnNameByIndex(i));
             }
         }
         return columnNames;
     }
 
-    public static ArrayList getVisibleColumnsIndexes(JTable table) {
+    public ArrayList getVisibleColumnsIndexes() {
         ArrayList indexes = new ArrayList();
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            if (columnIsVisible(table, i)) {
+        for (int i = 0; i < getColumnCount(); i++) {
+            if (columnIsVisible(i)) {
                 indexes.add(i);
             }
         }
         return indexes;
     }
 
-    public static int getVisibleColumnsCount(JTable table) {
+    public  int getVisibleColumnsCount(JTable table) {
         int count = 0;
         for (int i = 0; i < table.getColumnCount(); i++) {
-            if (columnIsVisible(table, i)) {
+            if (columnIsVisible(i)) {
                 count++;
             }
         }
         return count++;
     }
 
-    public static boolean columnIsVisible(JTable table, int column) {
-        int width = table.getColumnModel().getColumn(column).getWidth();
+    public boolean columnIsVisible(int column) {
+        int width = getColumnModel().getColumn(column).getWidth();
         return width == 0 ? false : true;
     }
 
-    public static String getColumnNameByIndex(JTable table, int column) {
-        JTableHeader th = table.getTableHeader();
+    public String getColumnNameByIndex(int column) {
+        JTableHeader th = getTableHeader();
         TableColumnModel tcm = th.getColumnModel();
         TableColumn tc = tcm.getColumn(column);
         return (String) tc.getHeaderValue();

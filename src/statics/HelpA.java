@@ -592,64 +592,9 @@ public class HelpA {
             setColumnWidthByIndex(i, dest, srcWidth);
         }
     }
-    public static final String R_DETAILED_TABLE_4_OBJ = "r_detailed_table_4";
-    public static final String INGRED_TABLE_1_OBJ = "ingred_table_1";
-    public static ArrayList R_DETAILED_TABLE_4_LIST = new ArrayList();
-    public static ArrayList INGRED_TABLE_1_LIST = new ArrayList();
 
-    public static ArrayList<Integer> saveColumnWidths(ArrayList<Integer> listBeforeChanges, int initialWidth, JTable table, String fileName) {
-        //
-        ArrayList<Integer> list = new ArrayList<Integer>();
-        //
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            list.add(getColumnWidthByIndex(i, table));
-        }
-        //
-        if (listBeforeChanges.isEmpty()) {
-            return list;
-        }
-        //
-        if (checkIfInitialWidths(list, initialWidth) == false) {
-            objectToFile(fileName, list);
-            return list;
-        } else {
-            return listBeforeChanges;
-        }
-        //
-    }
-
-    private static boolean checkIfInitialWidths(ArrayList<Integer> list, int initialWidth) {
-        for (Integer i : list) {
-            if (i != initialWidth && i != 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public static void restoreColumnWidths(JTable table, ArrayList<Integer> list) {
-        //
-        if (list.isEmpty()) {
-            return;
-        }
-        //
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            setColumnWidthByIndex(i, table, list.get(i));
-        }
-    }
-
-    public static ArrayList restoreListFromObject(String fileName) {
-        try {
-            Object obj = HelpA.fileToObject(fileName);
-            ArrayList colWidthList = (ArrayList) obj;
-            return colWidthList;
-        } catch (Exception ex) {
-//            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
-            return new ArrayList();
-        }
-    }
-
-    private static void objectToFile(String path, Object obj) {
+    
+    public static void objectToFile(String path, Object obj) {
         try {
             FileOutputStream fos = new FileOutputStream(path);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -659,7 +604,7 @@ public class HelpA {
         }
     }
 
-    private static Object fileToObject(String path) throws IOException, ClassNotFoundException {
+    public static Object fileToObject(String path) throws IOException, ClassNotFoundException {
         FileInputStream fas = new FileInputStream(path);
         ObjectInputStream ois = new ObjectInputStream(fas);
         Object obj = ois.readObject();
