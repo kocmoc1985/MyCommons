@@ -61,7 +61,6 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -75,7 +74,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -689,6 +687,31 @@ public class HelpA {
                 Object obj = rs.getString(col + 1);
                 content[row][col] = obj;
             }
+        }
+        //
+        return content;
+    }
+    
+    public static synchronized Object[][] getContent(ResultSet rs, int indexFirst, int indexLast) throws SQLException {
+        ResultSetMetaData rsmt;
+        Object[][] content;
+        int rows, columns;
+        rsmt = rs.getMetaData(); // får in antalet columner
+        rs.last(); // flyttar pekaren till sista positon
+        columns = rsmt.getColumnCount(); // retrieves number of columns och lagrar det i "columns".
+        rows = (indexLast - indexFirst) + 1;
+        content = new Object[rows][columns]; // ger arrayen content som är en "Object"
+        // initialisering i den första demensionen är "rows" i den andra "columns"
+        //
+        int row_ = 0;
+        for (int row = indexFirst; row <= indexLast; row++) {
+            rs.absolute(row); // Flytta till rätt rad i resultatmängden
+            for (int col = 0; col < columns; col++) {
+//                System.out.println("Col: " + (col+1));
+                Object obj = rs.getString(col + 1);
+                content[row_][col] = obj;
+            }
+            row_++;
         }
         //
         return content;

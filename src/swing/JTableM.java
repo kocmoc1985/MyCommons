@@ -7,15 +7,22 @@ package swing;
 import Exceptions.TableNameNotSpecifiedException;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
@@ -29,7 +36,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import statics.HelpA;
 
 /**
  *
@@ -37,15 +43,30 @@ import statics.HelpA;
  */
 public class JTableM extends JTable implements TableColumnModelListener {
 
-    private final String TABLE_NAME;
-    private final boolean SAVE_COL_WIDTHS;
+    private String TABLE_NAME;
+    private boolean SAVE_COL_WIDTHS;
     private ArrayList COL_WIDTH_LIST_SAVE;
     private String COL_WIDTH_LIST_FILE_NAME;
     private final static int NOT_LESS_THEN = 100;
     private boolean SAVE_ALLOWED = false;
     private int INITIAL_TIMEOUT = 200;
+    private ArrayList<JTable> SYNC_TABLES_LIST;
 
+    /**
+     * The basic one
+     *
+     * @param tableName
+     * @param saveColWidths
+     */
     public JTableM(String tableName, boolean saveColWidths) {
+        basic(tableName, saveColWidths);
+    }
+
+    public void addSyncTable(JTable table) {
+        this.SYNC_TABLES_LIST.add(table);
+    }
+
+    private void basic(String tableName, boolean saveColWidths) {
         //
         this.TABLE_NAME = tableName;
         //
@@ -86,6 +107,18 @@ public class JTableM extends JTable implements TableColumnModelListener {
     @Override
     public void columnMarginChanged(ChangeEvent ce) {
         //
+        super.columnMarginChanged(ce);
+        //
+        if (SYNC_TABLES_LIST == null) {
+            SYNC_TABLES_LIST = new ArrayList<JTable>();
+        }
+        //
+        if (SYNC_TABLES_LIST.isEmpty() == false) {
+            for (JTable table : SYNC_TABLES_LIST) {
+                synchColumnWidths(table);
+            }
+        }
+        //
         if (SAVE_COL_WIDTHS == false) {
             return;
         }
@@ -107,11 +140,11 @@ public class JTableM extends JTable implements TableColumnModelListener {
             }
         }
         //
+        //
         if (parentTable instanceof JTableM && SAVE_ALLOWED) {
             COL_WIDTH_LIST_SAVE = saveColumnWidths();
-
-
         }
+        //
     }
 
     class ColumnCountWatcher implements Runnable {
@@ -201,7 +234,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
 
 
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class
+            Logger.getLogger(JTableM.class
                     .getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -224,24 +257,166 @@ public class JTableM extends JTable implements TableColumnModelListener {
     }
 
     //==========================================================================
+    public void synchColumnWidths(JTable tableToSyncWith) {
+        for (int i = 0; i < getColumnCount(); i++) {
+            int srcWidth = getColumnWidthByIndex(i);
+//            int destWidth = getColumnWidthByIndex(tableToSyncWith, i);
+//            System.out.println("src: " + srcWidth + "  dest: " + destWidth);
+            tableToSyncWith.getColumnModel().getColumn(i).setPreferredWidth(srcWidth);
+        }
+    }
+
+    //==========================================================================
     public synchronized void build_table_common(ResultSet rs, String q) {
         //
         if (rs == null) {
             return;
         }
         //
-        HelpA.setTrackingToolTip(this, q);
+//        HelpA.setTrackingToolTip(this, q);
         //
         try {
-            String[] headers = HelpA.getHeaders(rs);
-            Object[][] content = HelpA.getContent(rs);
+            String[] headers = getHeaders(rs);
+            Object[][] content = getContent(rs);
             this.setModel(new DefaultTableModel(content, headers));
 
 
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class
-                    .getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public synchronized void build_table_common(ResultSet rs, String q, int indexFirst, int indexLast) {
+        //
+        if (rs == null) {
+            return;
+        }
+        //
+//        HelpA.setTrackingToolTip(this, q);
+        //
+        try {
+            String[] headers = getHeaders(rs);
+            Object[][] content = getContent(rs);
+            this.setModel(new DefaultTableModel(content, headers));
+
+
+        } catch (SQLException ex) {
+            Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public static synchronized String[] getHeaders(ResultSet rs) throws SQLException {
+        ResultSetMetaData meta; // Returns the number of columns
+        String[] headers; // skapar en ny array att lagra titlar i
+        meta = rs.getMetaData(); // Den parameter som skickas in "ResultSet rs" innehåller Sträng vid initialisering
+        headers = new String[meta.getColumnCount()]; // ger arrayen "headers" initialisering och anger antalet positioner
+        for (int i = 0; i < headers.length; i++) {
+            headers[i] = meta.getColumnLabel(i + 1);
+        }
+        //
+        return headers;
+    }
+
+    public static synchronized Object[][] getContent(ResultSet rs) throws SQLException {
+        ResultSetMetaData rsmt;
+        Object[][] content;
+        int rows, columns;
+        rsmt = rs.getMetaData(); // får in antalet columner
+        rs.last(); // flyttar pekaren till sista positon
+        rows = rs.getRow(); // retrieves the current antalet rows och lagrar det i variabeln "rows"
+        columns = rsmt.getColumnCount(); // retrieves number of columns och lagrar det i "columns".
+        content = new Object[rows][columns]; // ger arrayen content som är en "Object"
+        // initialisering i den första demensionen är "rows" i den andra "columns"
+        //
+        for (int row = 0; row < rows; row++) {
+            rs.absolute(row + 1); // Flytta till rätt rad i resultatmängden
+            for (int col = 0; col < columns; col++) {
+                Object obj = rs.getString(col + 1);
+                content[row][col] = obj;
+            }
+        }
+        //
+        return content;
+    }
+
+    public static synchronized Object[][] getContent(ResultSet rs, int indexFirst, int indexLast) throws SQLException {
+        ResultSetMetaData rsmt;
+        Object[][] content;
+        int rows, columns;
+        rsmt = rs.getMetaData(); // får in antalet columner
+        rs.last(); // flyttar pekaren till sista positon
+        columns = rsmt.getColumnCount(); // retrieves number of columns och lagrar det i "columns".
+        rows = (indexLast - indexFirst) + 1;
+        content = new Object[rows][columns]; // ger arrayen content som är en "Object"
+        // initialisering i den första demensionen är "rows" i den andra "columns"
+        //
+        int row_ = 0;
+        for (int row = indexFirst; row <= indexLast; row++) {
+            rs.absolute(row); // Flytta till rätt rad i resultatmängden
+            for (int col = 0; col < columns; col++) {
+//                System.out.println("Col: " + (col+1));
+                Object obj = rs.getString(col + 1);
+                content[row_][col] = obj;
+            }
+            row_++;
+        }
+        //
+        return content;
+    }
+
+    public String jTableToHTML(String[] jtableColsToInclude) {
+        //
+        ArrayList<String> colNames;
+        //
+        if (jtableColsToInclude != null) {
+            colNames = getVisibleColumnsNames_B(jtableColsToInclude);
+        } else {
+            colNames = getVisibleColumnsNames();
+        }
+        //
+        //
+        String html = "";
+        //
+        //
+        html += "<table class='jtable'>";
+        //
+        //<TABLE HEADER>
+        html += "<tr>";
+        //
+        for (int i = 0; i < colNames.size(); i++) {
+            html += "<th>" + colNames.get(i) + "</th>";
+        }
+        //
+        html += "</tr>";
+        //</TABLE HEADER>
+        //
+        //<TABLE BODY>
+        for (int x = 0; x < getRowCount(); x++) {
+            //
+            ArrayList rowValues;
+            //
+            if (jtableColsToInclude != null) {
+                rowValues = getLineValuesVisibleColsOnly_B(x, jtableColsToInclude);
+            } else {
+                rowValues = getLineValuesVisibleColsOnly(x);
+            }
+            //
+            //
+            html += "<tr>";
+            //
+            for (int i = 0; i < rowValues.size(); i++) {
+                html += "<td>" + rowValues.get(i) + "</td>";
+            }
+            //
+            html += "</tr>";
+            //
+        }
+        //</TABLE BODY>
+        //
+        html += "</table>";
+        //
+        //
+        return html;
     }
 
     public String jTableToCSV(boolean writeToFile) {
@@ -262,14 +437,13 @@ public class JTableM extends JTable implements TableColumnModelListener {
             csv += "\n";
         }
         //
-        String path = HelpA.get_desktop_path() + "\\"
-                + HelpA.get_proper_date_time_same_format_on_all_computers_err_output() + ".csv";
+        String path = get_desktop_path() + "\\" + getDate() + ".csv";
         //
         if (writeToFile) {
             try {
-                HelpA.writeToFile(path, csv);
+                writeToFile(path, csv);
 //                JOptionPane.showMessageDialog(null, "Export file ready, the file is in: " + path);
-                HelpA.run_application_with_associated_application(new File(path));
+                run_application_with_associated_application(new File(path));
 
 
             } catch (IOException ex) {
@@ -299,23 +473,45 @@ public class JTableM extends JTable implements TableColumnModelListener {
             csv += "\n";
         }
         //
-        String path = HelpA.get_desktop_path() + "\\"
-                + HelpA.get_proper_date_time_same_format_on_all_computers_err_output() + ".csv";
+        String path = get_desktop_path() + "\\" + getDate() + ".csv";
         //
         if (writeToFile) {
             try {
-                HelpA.writeToFile(path, csv);
+                writeToFile(path, csv);
 //                JOptionPane.showMessageDialog(null, "Export file ready, the file is in: " + path);
-                HelpA.run_application_with_associated_application(new File(path));
+                run_application_with_associated_application(new File(path));
 
 
             } catch (IOException ex) {
-                Logger.getLogger(JTableM.class
-                        .getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         //
         return csv;
+    }
+
+    private String get_desktop_path() {
+        return System.getProperty("user.home") + "\\" + "Desktop";
+    }
+
+    private String getDate() {
+        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH_mm");
+        Calendar calendar = Calendar.getInstance();
+        return formatter.format(calendar.getTime());
+    }
+
+    private void writeToFile(String fileName, String textToWrite) throws IOException {
+        FileWriter fstream = new FileWriter(fileName, false);
+        BufferedWriter out = new BufferedWriter(fstream);
+
+        out.write(textToWrite);
+        out.newLine();
+        out.flush();
+        out.close();
+    }
+
+    private static void run_application_with_associated_application(File file) throws IOException {
+        Desktop.getDesktop().open(file);
     }
 
     private boolean exists_(String col, String[] columns) {
@@ -331,6 +527,10 @@ public class JTableM extends JTable implements TableColumnModelListener {
         return getColumnModel().getColumn(colIndex).getWidth();
     }
 
+    public int getColumnWidthByIndex(JTable table, int colIndex) {
+        return table.getColumnModel().getColumn(colIndex).getWidth();
+    }
+
     /**
      *
      * @param colIndex - starts from 0
@@ -339,6 +539,17 @@ public class JTableM extends JTable implements TableColumnModelListener {
      */
     public void setColumnWidthByIndex(int colIndex, int width) {
         getColumnModel().getColumn(colIndex).setWidth(width);
+    }
+
+    /**
+     * OBS! Some times setWidth() works, some times setPreferredWidth()
+     *
+     * @param table
+     * @param colIndex
+     * @param width
+     */
+    public void setColumnWidthByIndex(JTable table, int colIndex, int width) {
+        table.getColumnModel().getColumn(colIndex).setPreferredWidth(width);
     }
 
     public void disableColumnDragging() {
