@@ -60,7 +60,7 @@
             </Property>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new swing.JTableM(&quot;testTable&quot;)"/>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new swing.JTableM(&quot;testTable&quot;,true)"/>
           </AuxValues>
         </Component>
       </SubComponents>

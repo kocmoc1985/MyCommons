@@ -4,8 +4,6 @@
  */
 package examples;
 
-import swing.JTableM;
-
 /**
  *
  * @author KOCMOC
@@ -29,7 +27,7 @@ public class JTableM_save_widths extends javax.swing.JFrame {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new swing.JTableM("testTable");
+        jTable1 = new swing.JTableM("testTable",true);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 

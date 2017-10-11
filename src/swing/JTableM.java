@@ -38,15 +38,18 @@ import statics.HelpA;
 public class JTableM extends JTable implements TableColumnModelListener {
 
     private final String TABLE_NAME;
+    private final boolean SAVE_COL_WIDTHS;
     private ArrayList COL_WIDTH_LIST_SAVE;
     private String COL_WIDTH_LIST_FILE_NAME;
     private final static int NOT_LESS_THEN = 100;
     private boolean SAVE_ALLOWED = false;
     private int INITIAL_TIMEOUT = 200;
 
-    public JTableM(String tableName) {
+    public JTableM(String tableName, boolean saveColWidths) {
         //
         this.TABLE_NAME = tableName;
+        //
+        this.SAVE_COL_WIDTHS = saveColWidths;
         //
         COL_WIDTH_LIST_FILE_NAME = "col_widths_save__" + TABLE_NAME;
         //
@@ -55,22 +58,24 @@ public class JTableM extends JTable implements TableColumnModelListener {
         } catch (TableNameNotSpecifiedException ex) {
             Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //
     }
 
     public String getTABLE_NAME() {
         return TABLE_NAME;
     }
-    
-    //==========================================================================
 
+    //==========================================================================
     private void colWidthsRestoreInit() throws TableNameNotSpecifiedException {
         //
         if (TABLE_NAME == null || TABLE_NAME.isEmpty()) {
             throw new TableNameNotSpecifiedException();
         }
         //
-        Thread x = new Thread(new ColumnCountWatcher());
-        x.start();
+        if (SAVE_COL_WIDTHS) {
+            Thread x = new Thread(new ColumnCountWatcher());
+            x.start();
+        }
     }
 
     private void restore() {
@@ -80,6 +85,10 @@ public class JTableM extends JTable implements TableColumnModelListener {
 
     @Override
     public void columnMarginChanged(ChangeEvent ce) {
+        //
+        if (SAVE_COL_WIDTHS == false) {
+            return;
+        }
         //
         if (COL_WIDTH_LIST_SAVE == null) {
             COL_WIDTH_LIST_SAVE = new ArrayList();
@@ -215,10 +224,6 @@ public class JTableM extends JTable implements TableColumnModelListener {
     }
 
     //==========================================================================
-    
-    
-   
-
     public synchronized void build_table_common(ResultSet rs, String q) {
         //
         if (rs == null) {
@@ -276,7 +281,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
         return csv;
     }
 
-    public String jTableToCSV( boolean writeToFile, String[] columnsToInclude) {
+    public String jTableToCSV(boolean writeToFile, String[] columnsToInclude) {
         //
         String csv = "";
         //
@@ -321,8 +326,8 @@ public class JTableM extends JTable implements TableColumnModelListener {
         }
         return false;
     }
-    
-     public int getColumnWidthByIndex(int colIndex) {
+
+    public int getColumnWidthByIndex(int colIndex) {
         return getColumnModel().getColumn(colIndex).getWidth();
     }
 
@@ -336,7 +341,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
         getColumnModel().getColumn(colIndex).setWidth(width);
     }
 
-    public  void disableColumnDragging() {
+    public void disableColumnDragging() {
         getTableHeader().setReorderingAllowed(false);
     }
 
@@ -361,7 +366,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
      * @param rowNr
      * @return
      */
-    public  ArrayList getLineValuesVisibleColsOnly(int rowNr) {
+    public ArrayList getLineValuesVisibleColsOnly(int rowNr) {
         ArrayList rowValues = new ArrayList();
         for (int x = 0; x < getColumnCount(); x++) {
             if (columnIsVisible(x)) {
@@ -412,7 +417,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
         return indexes;
     }
 
-    public  int getVisibleColumnsCount(JTable table) {
+    public int getVisibleColumnsCount(JTable table) {
         int count = 0;
         for (int i = 0; i < table.getColumnCount(); i++) {
             if (columnIsVisible(i)) {
@@ -458,17 +463,17 @@ public class JTableM extends JTable implements TableColumnModelListener {
      * @param oldName
      * @param newTitle
      */
-    public static void changeTableHeaderTitleOfOneColumn(JTable table, String oldName, String newTitle) {
-        JTableHeader th = table.getTableHeader();
+    public void changeTableHeaderTitleOfOneColumn(String oldName, String newTitle) {
+        JTableHeader th = getTableHeader();
         TableColumnModel tcm = th.getColumnModel();
-        TableColumn tc = tcm.getColumn(getColByName(table, oldName));
+        TableColumn tc = tcm.getColumn(getColByName(oldName));
         tc.setHeaderValue(newTitle);
         th.repaint();
     }
 
     //
-    public static void paintTableHeaderBorderOneColumn(JTable table, int column, final Color borederColor) {
-        JTableHeader th = table.getTableHeader();
+    public void paintTableHeaderBorderOneColumn(int column, final Color borederColor) {
+        JTableHeader th = getTableHeader();
         TableColumnModel tcm = th.getColumnModel();
         TableColumn tc = tcm.getColumn(column);
         //
@@ -491,13 +496,13 @@ public class JTableM extends JTable implements TableColumnModelListener {
         th.repaint();
     }
 
-    public static void resetTableHeaderPainting(JTable table, int column) {
+    public void resetTableHeaderPainting(int column) {
         //
         if (column == -1) {
             return;
         }
         //
-        JTableHeader th = table.getTableHeader();
+        JTableHeader th = getTableHeader();
         TableColumnModel tcm = th.getColumnModel();
         TableColumn tc = tcm.getColumn(column);
         //
@@ -515,21 +520,21 @@ public class JTableM extends JTable implements TableColumnModelListener {
         }
     }
 
-    public static void removeRowJTable(JTable table, int rowToRemove) {
-        DefaultTableModel dm = (DefaultTableModel) table.getModel();
+    public void removeRowJTable(int rowToRemove) {
+        DefaultTableModel dm = (DefaultTableModel) getModel();
         dm.removeRow(rowToRemove);
     }
 
-    public static void addRowJTable(JTable table) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
+    public void addRowJTable() {
+        DefaultTableModel model = (DefaultTableModel) getModel();
         model.addRow(new Object[]{});
     }
 
-    public static int getRowByValue(JTable table, String col_name, String row_value) {
-        for (int i = 0; i < table.getColumnCount(); ++i) {
-            if (table.getColumnName(i).equals(col_name)) {
-                for (int y = 0; y < table.getRowCount(); ++y) {
-                    String curr_row_value = "" + table.getValueAt(y, i);
+    public int getRowByValue(String col_name, String row_value) {
+        for (int i = 0; i < getColumnCount(); ++i) {
+            if (getColumnName(i).equals(col_name)) {
+                for (int y = 0; y < getRowCount(); ++y) {
+                    String curr_row_value = "" + getValueAt(y, i);
                     //
                     if (curr_row_value == null) {
                         continue;
@@ -544,122 +549,121 @@ public class JTableM extends JTable implements TableColumnModelListener {
         return -1;
     }
 
-    public static void setValueGivenRow(JTable table, int row, String colName, Object value) {
-        table.setValueAt(value, row, getColByName(table, colName));
+    public void setValueGivenRow(int row, String colName, Object value) {
+        setValueAt(value, row, getColByName(colName));
     }
 
-    public static boolean getIfAnyRowChosen(JTable table) {
-        if (table.getSelectedRow() == -1) {
+    public boolean getIfAnyRowChosen() {
+        if (getSelectedRow() == -1) {
             return false;
         } else {
             return true;
         }
     }
 
-    public static String getValueGivenRow(JTable table, int row, String colName) {
-        return "" + table.getValueAt(row, getColByName(table, colName));
+    public String getValueGivenRow(int row, String colName) {
+        return "" + getValueAt(row, getColByName(colName));
     }
 
-    public static String getValueSelectedRow(JTable table, String colName) {
-        int selected_row = table.getSelectedRow();
+    public String getValueSelectedRow(String colName) {
+        int selected_row = getSelectedRow();
         //
         try {
-            return "" + table.getValueAt(selected_row, getColByName(table, colName));
+            return "" + getValueAt(selected_row, getColByName(colName));
         } catch (Exception ex) {
-//            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
     }
 
-    public static int getColByName(JTable table, String name) {
-        for (int i = 0; i < table.getColumnCount(); ++i) {
-            if (table.getColumnName(i).equals(name)) {
+    public int getColByName(String name) {
+        for (int i = 0; i < getColumnCount(); ++i) {
+            if (getColumnName(i).equals(name)) {
                 return i;
             }
         }
         return -1;
     }
 
-    public static boolean hideColumnByName(JTable table, String name) {
-        for (int i = 0; i < table.getColumnCount(); ++i) {
-            if (table.getColumnName(i).equals(name)) {
-                table.getColumnModel().getColumn(i).setMinWidth(0);
-                table.getColumnModel().getColumn(i).setMaxWidth(0);
-                table.getColumnModel().getColumn(i).setWidth(0);
+    public boolean hideColumnByName(String name) {
+        for (int i = 0; i < getColumnCount(); ++i) {
+            if (getColumnName(i).equals(name)) {
+                getColumnModel().getColumn(i).setMinWidth(0);
+                getColumnModel().getColumn(i).setMaxWidth(0);
+                getColumnModel().getColumn(i).setWidth(0);
                 return true;
             }
         }
         return false;
     }
 
-    public static int moveRowToEnd(JTable table, int currRow) {
-        DefaultTableModel dtm = (DefaultTableModel) table.getModel();
-        dtm.moveRow(currRow, currRow, table.getRowCount() - 1);
-        return table.getRowCount() - 1;
+    public int moveRowToEnd(int currRow) {
+        DefaultTableModel dtm = (DefaultTableModel) getModel();
+        dtm.moveRow(currRow, currRow, getRowCount() - 1);
+        return getRowCount() - 1;
     }
 
-    public static void moveRowTo(JTable table, int rowToMove, int rowToMoveTo) {
-        DefaultTableModel dtm = (DefaultTableModel) table.getModel();
+    public void moveRowTo(int rowToMove, int rowToMoveTo) {
+        DefaultTableModel dtm = (DefaultTableModel) getModel();
         dtm.moveRow(rowToMove, rowToMove, rowToMoveTo);
     }
 
-    public static void moveRowTo(JTable table, String colName, String rowValue, int rowToMoveTo) {
-        DefaultTableModel dtm = (DefaultTableModel) table.getModel();
-        int rowToMove = getRowByValue(table, colName, rowValue);
+    public void moveRowTo(String colName, String rowValue, int rowToMoveTo) {
+        DefaultTableModel dtm = (DefaultTableModel) getModel();
+        int rowToMove = getRowByValue(colName, rowValue);
         dtm.moveRow(rowToMove, rowToMove, rowToMoveTo);
     }
 
-    public static void selectNextRow(JTable table) {
+    public void selectNextRow() {
         try {
-            table.setRowSelectionInterval(table.getSelectedRow() + 1, table.getSelectedRow() + 1);
+            setRowSelectionInterval(getSelectedRow() + 1, getSelectedRow() + 1);
         } catch (Exception ex) {
         }
     }
 
-    public static void selectPrevRow(JTable table) {
+    public void selectPrevRow() {
         try {
-            table.setRowSelectionInterval(table.getSelectedRow() - 1, table.getSelectedRow() - 1);
+            setRowSelectionInterval(getSelectedRow() - 1, getSelectedRow() - 1);
         } catch (Exception ex) {
         }
     }
 
-    public static void setSelectedRow(JTable table, int rowNr) {
-        table.setRowSelectionInterval(rowNr, rowNr);
+    public void setSelectedRow(int rowNr) {
+        setRowSelectionInterval(rowNr, rowNr);
     }
 
-    public static void markFirstRowJtable(JTable table) {
-        markGivenRow(table, 0);
+    public void markFirstRowJtable() {
+        markGivenRow(0);
     }
 
-    public static void markLastRowJtable(JTable table) {
-        markGivenRow(table, table.getRowCount() - 1);
+    public void markLastRowJtable(JTable table) {
+        markGivenRow(getRowCount() - 1);
     }
 
-    public static void markGivenRow(JTable table, int row) {
+    public void markGivenRow(int row) {
         try {
-            table.changeSelection(row, 0, false, false);
+            changeSelection(row, 0, false, false);
         } catch (Exception ex) {
         }
     }
 
-    public static int getNextRow(JTable table, int previousRow) {
+    public int getNextRow(int previousRow) {
         int nextRow = previousRow++;
-        if (nextRow < table.getRowCount()) {
+        if (nextRow < getRowCount()) {
             return nextRow;
         } else {
             return 0;
         }
     }
 
-    public static boolean isEmtyJTable(JTable table) {
-        if (table.getRowCount() == 0) {
+    public boolean isEmtyJTable() {
+        if (getRowCount() == 0) {
             return true;
         } else {
             return false;
         }
     }
 
-    public static void stopEditJTable(JTable table) {
-        table.editCellAt(0, 0);
+    public void stopEditJTable() {
+        editCellAt(0, 0);
     }
 }
