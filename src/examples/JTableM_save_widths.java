@@ -4,7 +4,7 @@
  */
 package examples;
 
-import swing.JTableM;
+import mySwing.JTableM;
 
 /**
  *
@@ -17,8 +17,23 @@ public class JTableM_save_widths extends javax.swing.JFrame {
      */
     public JTableM_save_widths() {
         initComponents();
-        
-        JTableM table = (JTableM)jTable1;
+        //
+        JTableM table = (JTableM) jTable1;
+        //
+        Integer[][] content = {
+            {4, 5, 5, 7},
+            {0, 0, 10, 9},
+            {0, 0, 4, 5},{0, 0, 4, 5}};
+        //
+        String headers[] = {"Col1", "Col2", "Col3", "Col4"};
+        //
+        table.build_table_common(headers, content);
+        //
+        //OBS! This refreshes are needed in this example, in MCRECIPE NOT.
+        table.validate();
+        table.revalidate();
+        table.repaint();
+        //
         table.addSyncTable(jTable2);
         table.addSyncTable(jTable3);
     }
@@ -33,7 +48,7 @@ public class JTableM_save_widths extends javax.swing.JFrame {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new swing.JTableM("testTable",true);
+        jTable1 = new mySwing.JTableM("testTable",true);
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
@@ -97,13 +112,13 @@ public class JTableM_save_widths extends javax.swing.JFrame {
                 .addGap(22, 22, 22)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel3)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(jLabel2)
                         .addComponent(jLabel1)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 695, Short.MAX_VALUE)
                         .addComponent(jScrollPane2)
                         .addComponent(jScrollPane3)))
-                .addContainerGap(31, Short.MAX_VALUE))
+                .addGap(31, 31, 31))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

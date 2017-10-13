@@ -82,7 +82,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import sql.SqlBasicLocal;
-import swing.JComboBoxA;
+import mySwing.JComboBoxA;
 
 /**
  *

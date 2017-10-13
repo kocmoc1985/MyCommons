@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package swing;
+package mySwing;
 
 import sql.SqlBasicLocal;
 import ca.odell.glazedlists.BasicEventList;

@@ -2,12 +2,14 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package swing;
+package mySwing;
 
 import Exceptions.TableNameNotSpecifiedException;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,21 +38,22 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import statics.HelpA;
 
 /**
  *
  * @author KOCMOC
  */
-public class JTableM extends JTable implements TableColumnModelListener {
+public class JTableM extends JTable implements TableColumnModelListener, MouseListener {
 
     private String TABLE_NAME;
     private boolean SAVE_COL_WIDTHS;
     private ArrayList COL_WIDTH_LIST_SAVE;
     private String COL_WIDTH_LIST_FILE_NAME;
-    private final static int NOT_LESS_THEN = 100;
     private boolean SAVE_ALLOWED = false;
-    private int INITIAL_TIMEOUT = 200;
     private ArrayList<JTable> SYNC_TABLES_LIST;
+    private boolean ONCE = false;
+    private boolean TABLE_IS_BUILT = false;
 
     /**
      * The basic one
@@ -75,10 +78,13 @@ public class JTableM extends JTable implements TableColumnModelListener {
         COL_WIDTH_LIST_FILE_NAME = "col_widths_save__" + TABLE_NAME;
         //
         try {
-            colWidthsRestoreInit();
+            checkTableName();
         } catch (TableNameNotSpecifiedException ex) {
             Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //
+//        addMouseListener(this);
+        getTableHeader().addMouseListener(this);
         //
     }
 
@@ -87,21 +93,18 @@ public class JTableM extends JTable implements TableColumnModelListener {
     }
 
     //==========================================================================
-    private void colWidthsRestoreInit() throws TableNameNotSpecifiedException {
+    private void checkTableName() throws TableNameNotSpecifiedException {
         //
         if (TABLE_NAME == null || TABLE_NAME.isEmpty()) {
             throw new TableNameNotSpecifiedException();
         }
         //
-        if (SAVE_COL_WIDTHS) {
-            Thread x = new Thread(new ColumnCountWatcher());
-            x.start();
-        }
     }
 
     private void restore() {
         COL_WIDTH_LIST_SAVE = restoreSaveListFromObject(COL_WIDTH_LIST_FILE_NAME);
         restoreColumnWidths(COL_WIDTH_LIST_SAVE);
+
     }
 
     @Override
@@ -109,9 +112,17 @@ public class JTableM extends JTable implements TableColumnModelListener {
         //
         super.columnMarginChanged(ce);
         //
+        //
         if (SYNC_TABLES_LIST == null) {
             SYNC_TABLES_LIST = new ArrayList<JTable>();
         }
+        //
+        if (TABLE_IS_BUILT) {
+            TABLE_IS_BUILT = false;
+            restore();
+        }
+        //
+        //
         //
         if (SYNC_TABLES_LIST.isEmpty() == false) {
             for (JTable table : SYNC_TABLES_LIST) {
@@ -127,7 +138,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
             COL_WIDTH_LIST_SAVE = new ArrayList();
         }
         //
-//        System.out.println("COL MARGIN CHANGED: ");
+//        System.out.println("COL MARGIN CHANGED: " + TABLE_NAME);
         //
         DefaultTableColumnModel dtcm = (DefaultTableColumnModel) ce.getSource();
         JTable parentTable = null;
@@ -147,38 +158,18 @@ public class JTableM extends JTable implements TableColumnModelListener {
         //
     }
 
-    class ColumnCountWatcher implements Runnable {
-
-        private boolean run = true;
-
-        @Override
-        public void run() {
-            while (run) {
-                //
-                wait_(INITIAL_TIMEOUT);
-                //
-                if (getColumnCount() > 0 && getColumnWidthByIndex(1) > NOT_LESS_THEN) {
-                    run = false;
-                    restore();
-                    SAVE_ALLOWED = true;
-                }
-            }
-        }
-
-        private void wait_(int millis) {
-            synchronized (this) {
-                try {
-                    wait(millis);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(ColumnCountWatcher.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+    @Override
+    public void mouseEntered(MouseEvent me) {
+        if (ONCE == false) {
+            System.out.println("Event: " + me.getSource());
+            SAVE_ALLOWED = true;
+            ONCE = true;
         }
     }
 
     private ArrayList<Integer> saveColumnWidths() {
         //
-        ArrayList<Integer> list = new ArrayList<>();
+        ArrayList<Integer> list = new ArrayList<Integer>();
         //
         for (int i = 0; i < getColumnCount(); i++) {
             list.add(getColumnWidthByIndex(i));
@@ -188,13 +179,9 @@ public class JTableM extends JTable implements TableColumnModelListener {
             return list;
         }
         //
-        if (verifyWidths(list)) {
-            objectToFile(COL_WIDTH_LIST_FILE_NAME, list);
-//            System.out.println("saved");
-            return list;
-        } else {
-            return COL_WIDTH_LIST_SAVE;
-        }
+        objectToFile(COL_WIDTH_LIST_FILE_NAME, list);
+//        System.out.println("saved");
+        return list;
         //
     }
 
@@ -203,7 +190,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
             Object obj = fileToObject(fileName);
             ArrayList colWidthList = (ArrayList) obj;
             return colWidthList;
-        } catch (IOException | ClassNotFoundException ex) {
+        } catch (Exception ex) {
             return new ArrayList();
         }
     }
@@ -239,34 +226,23 @@ public class JTableM extends JTable implements TableColumnModelListener {
         }
     }
 
-    private boolean verifyWidths(ArrayList<Integer> list) {
-        //
-        int less = 0;
-        //
-        for (Integer i : list) {
-            if (i < NOT_LESS_THEN) {
-                less++;
-            }
-        }
-        //
-        if (less == 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     //==========================================================================
     public void synchColumnWidths(JTable tableToSyncWith) {
         for (int i = 0; i < getColumnCount(); i++) {
             int srcWidth = getColumnWidthByIndex(i);
-//            int destWidth = getColumnWidthByIndex(tableToSyncWith, i);
-//            System.out.println("src: " + srcWidth + "  dest: " + destWidth);
             tableToSyncWith.getColumnModel().getColumn(i).setPreferredWidth(srcWidth);
         }
     }
 
     //==========================================================================
+    public synchronized void build_table_common(String[] headers, Object[][] content) {
+        this.setModel(new DefaultTableModel(content, headers));
+        //
+        TABLE_IS_BUILT = true;
+        //
+      
+    }
+
     public synchronized void build_table_common(ResultSet rs, String q) {
         //
         if (rs == null) {
@@ -284,6 +260,10 @@ public class JTableM extends JTable implements TableColumnModelListener {
         } catch (SQLException ex) {
             Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //
+        TABLE_IS_BUILT = true;
+        //
+       
     }
 
     public synchronized void build_table_common(ResultSet rs, String q, int indexFirst, int indexLast) {
@@ -303,9 +283,34 @@ public class JTableM extends JTable implements TableColumnModelListener {
         } catch (SQLException ex) {
             Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //
+        TABLE_IS_BUILT = true;
+        //
+      
     }
 
-    public static synchronized String[] getHeaders(ResultSet rs) throws SQLException {
+    public synchronized void build_table_common_with_rounding(ResultSet rs, String q, JTable jTable, String roundingFormat, String[] skipColumnsNames, String[] exceptionColumns, String[] sortAsInt) {
+        //
+        if (rs == null) {
+            return;
+        }
+        //
+        HelpA.setTrackingToolTip(jTable, q);
+        //
+        try {
+            String[] headers = getHeaders(rs);
+            Object[][] content = getContentRounding(rs, roundingFormat, headers, skipColumnsNames, exceptionColumns, sortAsInt);
+            jTable.setModel(new DefaultTableModelM(content, headers, sortAsInt, jTable));
+            jTable.setAutoCreateRowSorter(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //
+        TABLE_IS_BUILT = true;
+        //
+    }
+
+    public synchronized String[] getHeaders(ResultSet rs) throws SQLException {
         ResultSetMetaData meta; // Returns the number of columns
         String[] headers; // skapar en ny array att lagra titlar i
         meta = rs.getMetaData(); // Den parameter som skickas in "ResultSet rs" innehåller Sträng vid initialisering
@@ -317,7 +322,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
         return headers;
     }
 
-    public static synchronized Object[][] getContent(ResultSet rs) throws SQLException {
+    public synchronized Object[][] getContent(ResultSet rs) throws SQLException {
         ResultSetMetaData rsmt;
         Object[][] content;
         int rows, columns;
@@ -339,7 +344,7 @@ public class JTableM extends JTable implements TableColumnModelListener {
         return content;
     }
 
-    public static synchronized Object[][] getContent(ResultSet rs, int indexFirst, int indexLast) throws SQLException {
+    public synchronized Object[][] getContent(ResultSet rs, int indexFirst, int indexLast) throws SQLException {
         ResultSetMetaData rsmt;
         Object[][] content;
         int rows, columns;
@@ -362,6 +367,93 @@ public class JTableM extends JTable implements TableColumnModelListener {
         }
         //
         return content;
+    }
+
+    private synchronized Object[][] getContentRounding(ResultSet rs, String format, String[] headers, String[] skipColumnsNames, String[] exceptionColumns, String[] sortAsInt) throws SQLException {
+        ResultSetMetaData rsmt;
+        Object[][] content;
+        int rows, columns;
+        rsmt = rs.getMetaData(); // får in antalet columner
+        rs.last(); // flyttar pekaren till sista positon
+        rows = rs.getRow(); // retrieves the current antalet rows och lagrar det i variabeln "rows"
+        columns = rsmt.getColumnCount(); // retrieves number of columns och lagrar det i "columns".
+        content = new Object[rows][columns]; // ger arrayen content som är en "Object"
+        //
+        // initialisering i den första demensionen är "rows" i den andra "columns"
+        //
+        for (int row = 0; row < rows; row++) {
+            rs.absolute(row + 1); // Flytta till rätt rad i resultatmängden
+            for (int col = 0; col < columns; col++) {
+                //
+                Object obj = rs.getString(col + 1);
+                //
+                if (exceptionColumn(col, headers, exceptionColumns)) {
+                    content[row][col] = roundDouble(obj, "%2.3f");
+                } else if (skipRounding(col, headers, skipColumnsNames) == false) {
+                    content[row][col] = roundDouble(obj, format);//-----------------------OBS ROUNDING IS DONE HERE
+                } else if (sortAsInteger(col, headers, sortAsInt)) {
+                    content[row][col] = Integer.parseInt(obj.toString());
+                } else {
+                    content[row][col] = obj;
+                }
+                //
+            }
+        }
+        //
+        return content;
+    }
+
+    private boolean exceptionColumn(int colNr, String[] headers, String[] exceptionColumns) {
+        for (String colName : exceptionColumns) {
+            if (headers[colNr].equals(colName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private synchronized Object roundDouble(Object obj, String format) {
+        if (isDouble(obj)) {
+            String val = (String) obj;
+            double ret = Double.parseDouble(val);
+//            return "" + Double.parseDouble(roundDouble(ret, format));
+            return "" + roundDouble(ret, format);
+        } else {
+            return obj;
+        }
+    }
+
+    private boolean sortAsInteger(int colNr, String[] headers, String[] colNames) {
+        for (String colName : colNames) {
+            if (headers[colNr].equals(colName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private synchronized boolean isDouble(Object obj) {
+        if (obj instanceof String) {
+            String val = (String) obj;
+            //
+            //
+            try {
+                Double.parseDouble(val);
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private boolean skipRounding(int colNr, String[] headers, String[] skipColumnsNames) {
+        for (String colName : skipColumnsNames) {
+            if (headers[colNr].equals(colName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String jTableToHTML(String[] jtableColsToInclude) {
@@ -538,7 +630,17 @@ public class JTableM extends JTable implements TableColumnModelListener {
      * @param width
      */
     public void setColumnWidthByIndex(int colIndex, int width) {
-        getColumnModel().getColumn(colIndex).setWidth(width);
+        getColumnModel().getColumn(colIndex).setPreferredWidth(width);
+    }
+
+    /**
+     *
+     * @param colIndex - starts from 0
+     * @param table
+     * @param width
+     */
+    public void setColumnWidthByIndexP(int colIndex, int width) {
+        getColumnModel().getColumn(colIndex).setPreferredWidth(width);
     }
 
     /**
@@ -876,5 +978,21 @@ public class JTableM extends JTable implements TableColumnModelListener {
 
     public void stopEditJTable() {
         editCellAt(0, 0);
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent me) {
+    }
+
+    @Override
+    public void mousePressed(MouseEvent me) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent me) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent me) {
     }
 }
