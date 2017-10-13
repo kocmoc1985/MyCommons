@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
 import javax.swing.border.Border;
+import other.CBoxParam;
 import statics.HelpA;
 
 /**
@@ -31,16 +32,44 @@ public class JComboBoxA extends JComboBox {
 
     private long FLAG_WAIT;
     private String PARAMETER; // Column name in DB
-    private boolean IS_NUMBER; // If DB parameter is number
-    private final EventList<Object> LIST = new BasicEventList<>();
+    private String PARAMETER_2; // For MultiParams -> fillComboBoxMultiple(.....)
+    private boolean NUMBER;
+    //
+    //glazedlists AutoComplete
+    private final EventList<Object> LIST = new BasicEventList<Object>();
     private AutoCompleteSupport support;
+
+    public JComboBoxA() {
+    }
+
+    /**
+     * For multiparams
+     *
+     * @param param
+     */
+    public JComboBoxA(CBoxParam param) {
+        if (param.isMultipleParam()) {
+            this.PARAMETER = param.getParam();
+            this.PARAMETER_2 = param.getParam2();
+            this.NUMBER = param.isNumber();
+        } else {
+            this.PARAMETER = param.getParam();
+            this.NUMBER = param.isNumber();
+        }
+    }
+
+    /**
+     * @deprecated
+     */
+    public JComboBoxA(String PARAMETER, String PARAMETER_2, boolean isNumber) {
+        this.PARAMETER = PARAMETER;
+        this.NUMBER = isNumber;
+        this.PARAMETER_2 = PARAMETER_2;
+    }
 
     public JComboBoxA(String PARAMETER, boolean isNumber) {
         this.PARAMETER = PARAMETER;
-        this.IS_NUMBER = isNumber;
-    }
-
-    public JComboBoxA() {
+        this.NUMBER = isNumber;
     }
 
     public void AUTOFILL_ADD(List list) {
@@ -50,11 +79,24 @@ public class JComboBoxA extends JComboBox {
         } else {
             LIST.clear();
             LIST.addAll(list);
+            setEditable(true);
         }
     }
 
     public boolean isNUMBER() {
-        return IS_NUMBER;
+        return NUMBER;
+    }
+
+    public boolean isMULTI_PARAM() {
+        if (PARAMETER != null && PARAMETER_2 != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String getPARAMETER_2() {
+        return PARAMETER_2;
     }
 
     public String getPARAMETER() {
@@ -72,12 +114,10 @@ public class JComboBoxA extends JComboBox {
     public void setFLAG_WAIT(long FLAG_WAIT) {
         this.FLAG_WAIT = FLAG_WAIT;
     }
-    
     //==========================================================================
-    
     private static final HashMap<String, String> fakeValuesMap = new HashMap<String, String>();
     private Border initialComboBoxBorder;
-    
+
     static {
         //STATUS -> RECIPE_DETAILED -> TABLE_INVERT
         fakeValuesMap.put("S", "ACTIVE");
@@ -122,19 +162,19 @@ public class JComboBoxA extends JComboBox {
                 if (val != null && val.isEmpty() == false) {
                     if (showMultipleValues) {
                         //
-                        list.add(new ComboBoxObjectB(HelpA.getValueResultSet(rs, 1), HelpA.getValueResultSet(rs, 2), HelpA.getValueResultSet(rs, 3)));
+                        list.add(new HelpA.ComboBoxObjectB(HelpA.getValueResultSet(rs, 1), HelpA.getValueResultSet(rs, 2), HelpA.getValueResultSet(rs, 3)));
                         //
                     } else if (fakeValue) {
                         //
                         String value = HelpA.getValueResultSet(rs, 1);
                         String fakeVal = fakeValuesMap.get(value);
                         if (fakeVal != null) {
-                            list.add(new ComboBoxObjectC(value, fakeVal, ""));
+                            list.add(new HelpA.ComboBoxObjectC(value, fakeVal, ""));
                         }
                         //
                     } else {
                         //
-                        list.add(new ComboBoxObject(HelpA.getValueResultSet(rs, 1), HelpA.getValueResultSet(rs, 2), HelpA.getValueResultSet(rs, 3)));
+                        list.add(new HelpA.ComboBoxObject(HelpA.getValueResultSet(rs, 1), HelpA.getValueResultSet(rs, 2), HelpA.getValueResultSet(rs, 3)));
                         //
                     }
                 }
@@ -147,6 +187,13 @@ public class JComboBoxA extends JComboBox {
         if (jbox instanceof JComboBoxA) {
             JComboBoxA boxA = (JComboBoxA) jbox;
             boxA.AUTOFILL_ADD(list);
+            //
+            try {
+                jbox.setSelectedIndex(0);
+            } catch (Exception ex) {
+            }
+            //
+
         }
         //
         //
