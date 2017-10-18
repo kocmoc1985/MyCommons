@@ -1343,21 +1343,113 @@ public class HelpA {
         fakeValuesMap.put("C", "CALCULATION");
         fakeValuesMap.put("R", "DEVELOPMENT");
     }
-
+    
     /**
-     *
+     * This one shall only be used together with JComboBoxM
+     * @deprecated 
      * @param sql
      * @param jbox
      * @param query
      * @param initialValue
-     * @param showMultipleValues if true the combo box will show 2 parameters
-     * @param fakeValue shows a predefined "title" instead for the real value
-     * @return
+     * @param showMultipleValues
+     * @param fakeValue
+     * @return 
      */
-    public static JComboBox fillComboBox(SqlBasicLocal sql, JComboBoxA jbox, String query,
+    public static JComboBox fillComboBox_autofill_ext(SqlBasicLocal sql, JComboBox jbox, String query,
             Object initialValue, boolean showMultipleValues, boolean fakeValue) {
         //
-        ArrayList<Object> list = new ArrayList<>();
+        ArrayList<Object> list = new ArrayList<Object>();
+        //
+        boolean cond_1 = initialValue != null && (initialValue instanceof Boolean == false)
+                && showMultipleValues == false && fakeValue == false;
+        //
+        if (cond_1) {
+            list.add(initialValue);
+        }
+        //
+        if (fakeValue) {
+            list.add(" ");
+        }
+        //
+        try {
+            ResultSet rs = sql.execute(query);
+            while (rs.next()) {
+                String val = rs.getString(1);
+                if (val != null && val.isEmpty() == false) {
+                    if (showMultipleValues) {
+                        //
+                        list.add(new ComboBoxObjectB(getValueResultSet(rs, 1), getValueResultSet(rs, 2), getValueResultSet(rs, 3)));
+                        //
+                    } else if (fakeValue) {
+                        //
+                        String value = getValueResultSet(rs, 1);
+                        String fakeVal = fakeValuesMap.get(value);
+                        if (fakeVal != null) {
+                            list.add(new ComboBoxObjectC(value, fakeVal, ""));
+                        }
+                        //
+                    } else {
+                        //
+                        list.add(new ComboBoxObject(getValueResultSet(rs, 1), getValueResultSet(rs, 2), getValueResultSet(rs, 3)));
+                        //
+                    }
+                }
+            }
+            //
+        } catch (Exception ex) {
+            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //
+        Object[] arr = list.toArray();
+        //
+        if (arr.length == 0) {
+            arr = new Object[1];
+            arr[0] = "";
+        }
+        //
+        AutoCompleteSupport support;
+        //
+        //#AutoComplete, Auto complete# glazedlists_java15-1.9.1.jar is needed
+        if (autoSupportList.containsKey(jbox) == false) {
+            support = AutoCompleteSupport.install(
+                    jbox, GlazedLists.eventListOf(arr));
+            //
+            autoSupportList.put(jbox, support);
+            //
+            jbox.setSelectedIndex(0);
+            //
+        } else {
+            //
+            support = autoSupportList.get(jbox);
+            //
+            if (support.isInstalled()) {
+                support.uninstall();
+                support = AutoCompleteSupport.install(
+                        jbox, GlazedLists.eventListOf(arr));
+                //
+                autoSupportList.remove(jbox);
+                //
+                autoSupportList.put(jbox, support);
+                //
+            }
+        }
+        //
+        if (initialComboBoxBorder == null) {
+            initialComboBoxBorder = jbox.getBorder();
+        }
+        //
+        tryMatch(jbox, (String) initialValue, showMultipleValues, fakeValue);
+        //
+        setTrackingToolTip(jbox, query);
+        //
+        return jbox;
+    }
+
+    
+    public static JComboBox fillComboBox(SqlBasicLocal sql, JComboBox jbox, String query,
+            Object initialValue, boolean showMultipleValues, boolean fakeValue) {
+        //
+        ArrayList<Object> list = new ArrayList<Object>();
         //
         boolean cond_1 = initialValue != null && (initialValue instanceof Boolean == false)
                 && showMultipleValues == false && fakeValue == false;
@@ -1409,7 +1501,17 @@ public class HelpA {
             Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
-        jbox.AUTOFILL_ADD(list);
+        if (jbox instanceof JComboBoxA) {
+            JComboBoxA boxA = (JComboBoxA) jbox;
+            boxA.AUTOFILL_ADD(list);
+            //
+            try {
+                jbox.setSelectedIndex(0);
+            } catch (Exception ex) {
+            }
+            //
+
+        }
         //
         //
         if (initialComboBoxBorder == null) {
@@ -1418,7 +1520,7 @@ public class HelpA {
         //
         tryMatch(jbox, (String) initialValue, showMultipleValues, fakeValue);
         //
-//        setTrackingToolTip(jbox, query);
+        setTrackingToolTip(jbox, query);
         //
         return jbox;
     }
