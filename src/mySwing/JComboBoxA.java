@@ -71,6 +71,11 @@ public class JComboBoxA extends JComboBox {
         this.PARAMETER = PARAMETER;
         this.NUMBER = isNumber;
     }
+    
+    public void clearContent(){
+         LIST.clear();
+         LIST.addAll(new BasicEventList<>());
+    }
 
     public void AUTOFILL_ADD(List list) {
         if (support == null || support.isInstalled() == false) {
