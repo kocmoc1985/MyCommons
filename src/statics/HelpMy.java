@@ -88,7 +88,7 @@ import mySwing.JComboBoxA;
  *
  * @author Administrator
  */
-public class HelpA {
+public class HelpMy {
 
     private static HashMap<String, String> properties_to_use_map = new HashMap();
     private static int nr_properties;
@@ -148,7 +148,7 @@ public class HelpA {
             PrintStream out = new PrintStream(new FileOutputStream(output_path));
             System.setErr(out);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -165,6 +165,8 @@ public class HelpA {
             f.createNewFile();
         }
     }
+    
+    public static Boolean TRACKING_TOOL_TIP = false;
 
 //    public static final boolean TRACKING_ON = true;
     public static void setTrackingToolTip(JComponent jc, String text) {
@@ -173,7 +175,7 @@ public class HelpA {
             return;
         }
         //
-        if (runningInNetBeans("MCRecipe.jar")) {
+        if (runningInNetBeans("MCRecipe.jar") && TRACKING_TOOL_TIP) {
             if (jc instanceof JComboBox) {//Combo from InvertTable
                 JComboBox box = (JComboBox) jc;
                 box.setRenderer(new MyComboBoxRenderer(text));
@@ -282,7 +284,7 @@ public class HelpA {
                 return true;
             }
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
         //
@@ -301,7 +303,7 @@ public class HelpA {
                 return rs.getString(columnGet);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
@@ -333,7 +335,7 @@ public class HelpA {
                 return rs.getString(1);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
@@ -350,7 +352,7 @@ public class HelpA {
             }
 
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return -1;
         }
         //
@@ -372,7 +374,7 @@ public class HelpA {
             }
 
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return -1;
         }
         //
@@ -402,7 +404,7 @@ public class HelpA {
         try {
             return formatter.parse(date).getTime();
         } catch (ParseException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return -1;
         }
     }
@@ -441,7 +443,7 @@ public class HelpA {
         try {
             return formatter.parse(date).getTime();
         } catch (ParseException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return -1;
         }
     }
@@ -482,7 +484,7 @@ public class HelpA {
         int val = 0;
         if (nr_properties == 1) {
             property_path = (String) properties_to_use_map.get("" + 1);
-            properties = HelpA.properties_load_properties(path + "/" + property_path, false);
+            properties = HelpMy.properties_load_properties(path + "/" + property_path, false);
         } else {
             try {
                 val = Integer.parseInt(JOptionPane.showInputDialog(dialog));
@@ -491,7 +493,7 @@ public class HelpA {
             }
 
             property_path = (String) properties_to_use_map.get("" + val);
-            properties = HelpA.properties_load_properties(path + "/" + property_path, false);
+            properties = HelpMy.properties_load_properties(path + "/" + property_path, false);
         }
         if (properties == null) {
             JOptionPane.showMessageDialog(null, "properties not found or error occured: " + property_path + " / program will close");
@@ -527,7 +529,7 @@ public class HelpA {
         try {
             ret = proc.getInt(1);
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             ret = -1;
         }
         //
@@ -542,7 +544,7 @@ public class HelpA {
             proc.registerOutParameter(1, Types.INTEGER);
             proc.execute();
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return -1;
         }
         //
@@ -551,7 +553,7 @@ public class HelpA {
         try {
             ret = proc.getInt(1);
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             ret = -1;
         }
         //
@@ -598,7 +600,7 @@ public class HelpA {
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(obj);
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -620,7 +622,7 @@ public class HelpA {
             Object[][] content = getContent(rs);
             jTable.setModel(new DefaultTableModel(content, headers));
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -630,14 +632,14 @@ public class HelpA {
             return;
         }
         //
-        HelpA.setTrackingToolTip(jTable, q);
+        HelpMy.setTrackingToolTip(jTable, q);
         //
         try {
             String[] headers = getHeaders(rs);
             Object[][] content = getContent(rs);
             jTable.setModel(new DefaultTableModel(content, headers));
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -653,7 +655,7 @@ public class HelpA {
             jTable.setModel(new DefaultTableModel(content, headers));
             return jTable;
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
     }
@@ -845,16 +847,16 @@ public class HelpA {
             csv += "\n";
         }
         //
-        String path = HelpA.get_desktop_path() + "\\"
-                + HelpA.get_proper_date_time_same_format_on_all_computers_err_output() + ".csv";
+        String path = HelpMy.get_desktop_path() + "\\"
+                + HelpMy.get_proper_date_time_same_format_on_all_computers_err_output() + ".csv";
         //
         if (writeToFile) {
             try {
-                HelpA.writeToFile(path, csv);
+                HelpMy.writeToFile(path, csv);
 //                JOptionPane.showMessageDialog(null, "Export file ready, the file is in: " + path);
                 run_application_with_associated_application(new File(path));
             } catch (IOException ex) {
-                Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         //
@@ -879,16 +881,16 @@ public class HelpA {
             csv += "\n";
         }
         //
-        String path = HelpA.get_desktop_path() + "\\"
-                + HelpA.get_proper_date_time_same_format_on_all_computers_err_output() + ".csv";
+        String path = HelpMy.get_desktop_path() + "\\"
+                + HelpMy.get_proper_date_time_same_format_on_all_computers_err_output() + ".csv";
         //
         if (writeToFile) {
             try {
-                HelpA.writeToFile(path, csv);
+                HelpMy.writeToFile(path, csv);
 //                JOptionPane.showMessageDialog(null, "Export file ready, the file is in: " + path);
                 run_application_with_associated_application(new File(path));
             } catch (IOException ex) {
-                Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         //
@@ -1256,7 +1258,7 @@ public class HelpA {
                     try {
                         wait(100);
                     } catch (InterruptedException ex) {
-                        Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 //
@@ -1397,7 +1399,7 @@ public class HelpA {
             }
             //
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
         Object[] arr = list.toArray();
@@ -1498,7 +1500,7 @@ public class HelpA {
             }
             //
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
         if (jbox instanceof JComboBoxA) {
@@ -1575,7 +1577,7 @@ public class HelpA {
             }
             //
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
         Object[] arr = list.toArray();
@@ -1597,7 +1599,7 @@ public class HelpA {
      */
     public static void fillComboBox_with_wait(final JComboBoxA box, String query, SqlBasicLocal sql) {
 
-        if (HelpA.fillAllowedComboBox(flagWait) == false) {
+        if (HelpMy.fillAllowedComboBox(flagWait) == false) {
             return;
         } else {
             flagWait = 0;
@@ -1608,7 +1610,7 @@ public class HelpA {
         String q = query;
         //
         //
-        HelpA.fillComboBox(sql, box, q, null, false, false);
+        HelpMy.fillComboBox(sql, box, q, null, false, false);
         //
         box.showPopup();
         //
@@ -1641,8 +1643,8 @@ public class HelpA {
             }
         }
         //
-        if (val instanceof HelpA.ComboBoxObject) {
-            HelpA.ComboBoxObject cbo = (HelpA.ComboBoxObject) val;
+        if (val instanceof HelpMy.ComboBoxObject) {
+            HelpMy.ComboBoxObject cbo = (HelpMy.ComboBoxObject) val;
             return cbo.getParam_1(); // The "'" shall be remowed in feature!!!!!
         }
         //
@@ -1763,7 +1765,7 @@ public class HelpA {
         try {
             run_program_with_catching_output_overall(textarea, commands2);
         } catch (IOException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -1816,7 +1818,7 @@ public class HelpA {
         try {
             builder.start();
         } catch (IOException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -1879,7 +1881,7 @@ public class HelpA {
         try {
             robot = new Robot();
         } catch (AWTException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (robot == null) {
             return;
@@ -1904,7 +1906,7 @@ public class HelpA {
         try {
             Thread.sleep(i);
         } catch (InterruptedException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -2014,7 +2016,7 @@ public class HelpA {
         try {
             Desktop.getDesktop().open(new File(path));
         } catch (IOException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -2081,13 +2083,13 @@ public class HelpA {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(HelpA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(HelpMy.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(HelpA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(HelpMy.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(HelpA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(HelpMy.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(HelpA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(HelpMy.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
     }
     

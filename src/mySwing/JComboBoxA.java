@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 import javax.swing.JComboBox;
 import javax.swing.border.Border;
 import other.CBoxParam;
-import statics.HelpA;
+import statics.HelpMy;
 
 /**
  * This instance of ComboBox is especially done for use with auto fill library
@@ -38,8 +38,13 @@ public class JComboBoxA extends JComboBox {
     //glazedlists AutoComplete
     private final EventList<Object> LIST = new BasicEventList<Object>();
     private AutoCompleteSupport support;
+    private boolean TRACKING_TOOL_TIP = false;
 
     public JComboBoxA() {
+    }
+
+    public JComboBoxA(boolean trackinToolTip) {
+        this.TRACKING_TOOL_TIP = trackinToolTip;
     }
 
     /**
@@ -71,10 +76,10 @@ public class JComboBoxA extends JComboBox {
         this.PARAMETER = PARAMETER;
         this.NUMBER = isNumber;
     }
-    
-    public void clearContent(){
-         LIST.clear();
-         LIST.addAll(new BasicEventList<>());
+
+    public void clearContent() {
+        LIST.clear();
+        LIST.addAll(new BasicEventList<>());
     }
 
     public void AUTOFILL_ADD(List list) {
@@ -167,26 +172,26 @@ public class JComboBoxA extends JComboBox {
                 if (val != null && val.isEmpty() == false) {
                     if (showMultipleValues) {
                         //
-                        list.add(new HelpA.ComboBoxObjectB(HelpA.getValueResultSet(rs, 1), HelpA.getValueResultSet(rs, 2), HelpA.getValueResultSet(rs, 3)));
+                        list.add(new ComboBoxObjectB(HelpMy.getValueResultSet(rs, 1), HelpMy.getValueResultSet(rs, 2), HelpMy.getValueResultSet(rs, 3)));
                         //
                     } else if (fakeValue) {
                         //
-                        String value = HelpA.getValueResultSet(rs, 1);
+                        String value = HelpMy.getValueResultSet(rs, 1);
                         String fakeVal = fakeValuesMap.get(value);
                         if (fakeVal != null) {
-                            list.add(new HelpA.ComboBoxObjectC(value, fakeVal, ""));
+                            list.add(new ComboBoxObjectC(value, fakeVal, ""));
                         }
                         //
                     } else {
                         //
-                        list.add(new HelpA.ComboBoxObject(HelpA.getValueResultSet(rs, 1), HelpA.getValueResultSet(rs, 2), HelpA.getValueResultSet(rs, 3)));
+                        list.add(new ComboBoxObject(HelpMy.getValueResultSet(rs, 1), HelpMy.getValueResultSet(rs, 2), HelpMy.getValueResultSet(rs, 3)));
                         //
                     }
                 }
             }
             //
         } catch (Exception ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(JComboBoxA.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
         if (jbox instanceof JComboBoxA) {
@@ -198,7 +203,6 @@ public class JComboBoxA extends JComboBox {
             } catch (Exception ex) {
             }
             //
-
         }
         //
         //
@@ -206,11 +210,39 @@ public class JComboBoxA extends JComboBox {
             initialComboBoxBorder = jbox.getBorder();
         }
         //
-        HelpA.tryMatch(jbox, (String) initialValue, showMultipleValues, fakeValue);
+        HelpMy.tryMatch(jbox, (String) initialValue, showMultipleValues, fakeValue);
         //
-        HelpA.setTrackingToolTip(jbox, query);
+        if (TRACKING_TOOL_TIP) {
+            HelpMy.setTrackingToolTip(jbox, query);
+        }
         //
         return jbox;
+    }
+
+    public String getComboBoxSelectedValue() {
+        //
+        Object val = getSelectedItem();
+        //
+        if (val == null) {
+            return "NULL";
+        }
+        //
+        if (val instanceof String) {
+            String v = (String) val;
+            if (v.isEmpty()) {
+                return "NULL";
+            } else {
+                return v.toString();
+            }
+        }
+        //
+        //
+        if (val instanceof ComboBoxObject) {
+            ComboBoxObject cbo = (ComboBoxObject) val;
+            return cbo.getParam_1(); // The "'" shall be remowed in feature!!!!!
+        }
+        //
+        return null;
     }
 
     class ComboBoxObject {

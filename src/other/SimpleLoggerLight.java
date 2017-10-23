@@ -7,7 +7,7 @@ package other;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import statics.HelpA;
+import statics.HelpMy;
 
 /**
  * SimpleLogger light does not use any external libraries
@@ -71,9 +71,9 @@ public class SimpleLoggerLight {
 //    }
     private static String build_log_message(String type, String text_to_write) {
         if (type.equals(DEFAULT_LOG_MSG)) {
-            return "[" + HelpA.get_proper_date_time_same_format_on_all_computers() + "] " + "  " + text_to_write;
+            return "[" + HelpMy.get_proper_date_time_same_format_on_all_computers() + "] " + "  " + text_to_write;
         } else if (type.equals(EXCEPTION_LOG_MSG)) {
-            return "[" + HelpA.get_proper_date_time_same_format_on_all_computers() + "] "
+            return "[" + HelpMy.get_proper_date_time_same_format_on_all_computers() + "] "
                     + "  "  + " [Exception] " + text_to_write;
         } else {
             return "build_log_message(...) - > type not defined";

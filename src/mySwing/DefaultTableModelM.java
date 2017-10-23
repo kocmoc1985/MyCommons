@@ -6,7 +6,7 @@ package mySwing;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-import statics.HelpA;
+import statics.HelpMy;
 
 /**
  * To be able to sort as Integer/Float values
@@ -32,7 +32,7 @@ public class DefaultTableModelM extends DefaultTableModel {
     public Class<?> getColumnClass(int i) {
 
         for (String colName : sortAsFloatColNames) {
-            if (HelpA.getColByName(table, colName) == i) {
+            if (HelpMy.getColByName(table, colName) == i) {
                 return Integer.class;
             }
         }

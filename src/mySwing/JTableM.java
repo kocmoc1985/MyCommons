@@ -38,7 +38,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import statics.HelpA;
+import statics.HelpMy;
 
 /**
  *
@@ -295,7 +295,7 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
             return;
         }
         //
-        HelpA.setTrackingToolTip(jTable, q);
+        HelpMy.setTrackingToolTip(jTable, q);
         //
         try {
             String[] headers = getHeaders(rs);
@@ -303,7 +303,7 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
             jTable.setModel(new DefaultTableModelM(content, headers, sortAsInt, jTable));
             jTable.setAutoCreateRowSorter(true);
         } catch (SQLException ex) {
-            Logger.getLogger(HelpA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
         TABLE_IS_BUILT = true;
