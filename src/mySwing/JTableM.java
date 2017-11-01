@@ -8,6 +8,7 @@ import Exceptions.TableNameNotSpecifiedException;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.BufferedWriter;
@@ -58,6 +59,11 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
     /**
      * The basic one
      *
+     * If not working, check that you build the table not with HelpA...
+     * 
+     * For separate JFrame windows, they do not refresh after restoring the columns,
+     * so what you need to do is to setSize(getWidth()-1,getHeight()) after building the table
+     * 
      * @param tableName
      * @param saveColWidths
      */
@@ -295,7 +301,7 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
             return;
         }
         //
-        HelpMy.setTrackingToolTip(jTable, q);
+//        HelpMy.setTrackingToolTip(jTable, q);
         //
         try {
             String[] headers = getHeaders(rs);
