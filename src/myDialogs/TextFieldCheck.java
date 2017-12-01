@@ -35,7 +35,9 @@ public class TextFieldCheck extends JTextField implements KeyListener {
         this.sql = sql;
         this.entryExistQuery = q;
         this.regex = regex;
-        setColumns(columns);
+        if(columns > 0){
+            setColumns(columns);
+        }
         initOther();
     }
 

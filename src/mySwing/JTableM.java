@@ -26,13 +26,16 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -52,7 +55,7 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
     private ArrayList COL_WIDTH_LIST_SAVE;
     private String COL_WIDTH_LIST_FILE_NAME;
     private boolean SAVE_ALLOWED = false;
-    private ArrayList<JTable> SYNC_TABLES_LIST;
+    private ArrayList<JTable> SYNC_TABLES_LIST = new ArrayList<JTable>();
     private boolean ONCE = false;
     private boolean TABLE_IS_BUILT = false;
 
@@ -60,10 +63,11 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
      * The basic one
      *
      * If not working, check that you build the table not with HelpA...
-     * 
-     * For separate JFrame windows, they do not refresh after restoring the columns,
-     * so what you need to do is to setSize(getWidth()-1,getHeight()) after building the table
-     * 
+     *
+     * For separate JFrame windows, they do not refresh after restoring the
+     * columns, so what you need to do is to setSize(getWidth()-1,getHeight())
+     * after building the table
+     *
      * @param tableName
      * @param saveColWidths
      */
@@ -119,9 +123,9 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         super.columnMarginChanged(ce);
         //
         //
-        if (SYNC_TABLES_LIST == null) {
-            SYNC_TABLES_LIST = new ArrayList<JTable>();
-        }
+//        if (SYNC_TABLES_LIST == null) {
+//            SYNC_TABLES_LIST = new ArrayList<JTable>();
+//        }
         //
         if (TABLE_IS_BUILT) {
             TABLE_IS_BUILT = false;
@@ -246,7 +250,7 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         //
         TABLE_IS_BUILT = true;
         //
-      
+
     }
 
     public synchronized void build_table_common(ResultSet rs, String q) {
@@ -269,7 +273,7 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         //
         TABLE_IS_BUILT = true;
         //
-       
+
     }
 
     public synchronized void build_table_common(ResultSet rs, String q, int indexFirst, int indexLast) {
@@ -292,10 +296,10 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         //
         TABLE_IS_BUILT = true;
         //
-      
+
     }
 
-    public synchronized void build_table_common_with_rounding(ResultSet rs, String q, JTable jTable, String roundingFormat, String[] skipColumnsNames, String[] exceptionColumns, String[] sortAsInt) {
+    public synchronized void build_table_common_with_rounding(ResultSet rs, String q, String roundingFormat, String[] skipColumnsNames, String[] exceptionColumns, String[] sortAsInt) {
         //
         if (rs == null) {
             return;
@@ -306,10 +310,35 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         try {
             String[] headers = getHeaders(rs);
             Object[][] content = getContentRounding(rs, roundingFormat, headers, skipColumnsNames, exceptionColumns, sortAsInt);
-            jTable.setModel(new DefaultTableModelM(content, headers, sortAsInt, jTable));
-            jTable.setAutoCreateRowSorter(true);
+            setModel(new DefaultTableModelM(content, headers, sortAsInt, this));
+            setAutoCreateRowSorter(true);
         } catch (SQLException ex) {
             Logger.getLogger(HelpMy.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //
+        TABLE_IS_BUILT = true;
+        //
+    }
+
+    public synchronized void build_table_common_with_rounding_properties(ResultSet rs, String q, Properties props, String defaultFormat, String[] skipColumnsNames, String[] sortAsInt) {
+        //
+        if (rs == null) {
+            return;
+        }
+        //
+//        HelpA.setTrackingToolTip(jTable, q);
+        //
+        try {
+            //
+            String[] headers = getHeaders(rs);
+            //
+            Object[][] content = getContentRounding_properties(rs, props, defaultFormat, headers, skipColumnsNames, sortAsInt);
+            //
+            setModel(new DefaultTableModelM(content, headers, sortAsInt, this));
+            setAutoCreateRowSorter(true);
+            //
+        } catch (SQLException ex) {
+            Logger.getLogger(JTableM.class.getName()).log(Level.SEVERE, null, ex);
         }
         //
         TABLE_IS_BUILT = true;
@@ -393,6 +422,8 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
                 //
                 Object obj = rs.getString(col + 1);
                 //
+                String colName = headers[col];
+                //
                 if (exceptionColumn(col, headers, exceptionColumns)) {
                     content[row][col] = roundDouble(obj, "%2.3f");
                 } else if (skipRounding(col, headers, skipColumnsNames) == false) {
@@ -407,6 +438,57 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         }
         //
         return content;
+    }
+
+    public synchronized Object[][] getContentRounding_properties(ResultSet rs, Properties pFomats, String defaultFormat, String[] headers, String[] skipColumnsNames, String[] sortAsInt) throws SQLException {
+        ResultSetMetaData rsmt;
+        Object[][] content;
+        int rows, columns;
+        rsmt = rs.getMetaData(); // får in antalet columner
+        rs.last(); // flyttar pekaren till sista positon
+        rows = rs.getRow(); // retrieves the current antalet rows och lagrar det i variabeln "rows"
+        columns = rsmt.getColumnCount(); // retrieves number of columns och lagrar det i "columns".
+        content = new Object[rows][columns]; // ger arrayen content som är en "Object"
+        //
+        // initialisering i den första demensionen är "rows" i den andra "columns"
+        //
+        for (int row = 0; row < rows; row++) {
+            rs.absolute(row + 1); // Flytta till rätt rad i resultatmängden
+            for (int col = 0; col < columns; col++) {
+                //
+                Object obj = rs.getString(col + 1);
+                //
+                if (skipRounding(col, headers, skipColumnsNames) == false) {
+                    //
+                    String roundFormat = defineRoundingByColName(col, headers, defaultFormat, pFomats);
+                    //
+                    content[row][col] = roundDouble(obj, roundFormat);//-----------------------OBS ROUNDING IS DONE HERE
+                    //
+                } else if (sortAsInteger(col, headers, sortAsInt)) {
+                    content[row][col] = Integer.parseInt(obj.toString());
+                } else {
+                    content[row][col] = obj;
+                }
+                //
+            }
+        }
+        //
+        return content;
+    }
+
+    private String defineRoundingByColName(int col, String[] headers, String defaultFormat, Properties p) {
+        //
+        String colName = headers[col];
+        String format = "%2.";
+        String x = p.getProperty(colName, defaultFormat);
+        //
+        try {
+            Integer.parseInt(x);
+            return format += x + "f";
+        } catch (Exception ex) {
+            return x;
+        }
+        //
     }
 
     private boolean exceptionColumn(int colNr, String[] headers, String[] exceptionColumns) {
@@ -427,6 +509,10 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
         } else {
             return obj;
         }
+    }
+
+    private synchronized String roundDouble(double number, String format) {
+        return String.format(format, number).replace(",", ".");
     }
 
     private boolean sortAsInteger(int colNr, String[] headers, String[] colNames) {
@@ -619,6 +705,34 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
             }
         }
         return false;
+    }
+
+    /**
+     *
+     * @param table
+     * @param colName
+     * @param rightOrLeft 2=left, 4=right
+     */
+    public void alignValueByColName(String colName, int rightOrLeft) {
+        //
+        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+        renderer.setHorizontalAlignment(rightOrLeft);
+        //
+        int colNr = getColByName(colName);
+        //
+        if (colNr != -1) {
+            getColumnModel().getColumn(colNr).setCellRenderer(renderer);
+        }
+    }
+
+    public void rightAlignValues() {
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+        //
+        for (int x = 0; x < getColumnCount(); x++) {
+            getColumnModel().getColumn(x).setCellRenderer(rightRenderer);
+        }
+        //
     }
 
     public int getColumnWidthByIndex(int colIndex) {
