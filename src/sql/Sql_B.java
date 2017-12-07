@@ -13,11 +13,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import other.ShowMessage;
 import other.SimpleLoggerLight;
 
 /**
- * 
+ *
  * @author Administrator
  */
 public class Sql_B implements SqlBasicLocal {
@@ -33,6 +34,10 @@ public class Sql_B implements SqlBasicLocal {
     private boolean LOGG_CONNECTION_STRING;
     //
     public boolean ODBC_OR_MDB;
+    //
+    public static String SQL_TYPE_MSSQL = "mssql";
+    public static String SQL_TYPE_ORACLE = "oracle";
+    public static String SQL_TYPE_MYSQL = "mysql";
 
     public Sql_B(boolean statementSimple, boolean loggConnectionStr) {
         this.CREATE_STATEMENT_SIMPLE = statementSimple;
@@ -79,7 +84,29 @@ public class Sql_B implements SqlBasicLocal {
         }
     }
 
-    
+    /**
+     *
+     * @param sqlType
+     * @param host
+     * @param port
+     * @param databaseName
+     * @param userName
+     * @param password
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
+    public void connect(String sqlType, String host, String port, String databaseName, String userName, String password) throws ClassNotFoundException, SQLException {
+        if (sqlType.equals(SQL_TYPE_MSSQL)) {
+            connect_jdbc(host, port, databaseName, userName, password);
+        } else if (sqlType.equals(SQL_TYPE_ORACLE)) {
+            connect_oracle(host, port, databaseName, userName, password);
+        } else if (sqlType.equals(SQL_TYPE_MYSQL)) {
+            connect_mysql(host, port, databaseName, userName, password);
+        } else {
+            JOptionPane.showMessageDialog(null, "SQL type not specified");
+        }
+    }
+
     public void connect_oracle(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
         //
         //Name of .jar = ojdbc6.jar
@@ -93,7 +120,7 @@ public class Sql_B implements SqlBasicLocal {
         //Default port = 1521
         String url = "jdbc:oracle:thin:" + userName + "/" + password + "@" + host + ":" + port + "/" + databaseName;
         //
-        logg_connection_string(url);      
+        logg_connection_string(url);
         //
         connection = DriverManager.getConnection(url);
         //
@@ -258,12 +285,12 @@ public class Sql_B implements SqlBasicLocal {
     }
 
     //    
-    public void connectMySql(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
+    public void connect_mysql(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
         Class.forName("com.mysql.jdbc.Driver");
 //            connection = DriverManager.getConnection("jdbc:mysql://195.178.232.239:3306/m09k2847","m09k2847","636363");
         connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + databaseName, userName, password);
         statement = connection.createStatement();
-
+        statement_2 = connection.createStatement();
     }
 
     @Override
