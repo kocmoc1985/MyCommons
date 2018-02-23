@@ -1738,6 +1738,27 @@ public class HelpMy {
         //
         return jbox;
     }
+    public static JComboBox fillComboBoxNoAutoFill(JComboBox jbox, Object[] values, Object initialValue) {
+        //
+        ArrayList<Object> list = new ArrayList<Object>();
+        //
+        if (initialValue != null) {
+            list.add(initialValue);
+        }
+        //
+        list.addAll(Arrays.asList(values));
+        //
+        Object[] arr = list.toArray();
+        //
+        jbox.removeAllItems();
+        //
+        jbox.setModel(new DefaultComboBoxModel(arr));
+        //
+        jbox.setSelectedIndex(0);
+        //
+        return jbox;
+    }
+    
 
     public static void run_application_with_associated_application(File file) throws IOException {
         Desktop.getDesktop().open(file);
