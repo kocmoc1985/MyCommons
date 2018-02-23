@@ -1738,13 +1738,22 @@ public class HelpMy {
         //
         return jbox;
     }
-    public static JComboBox fillComboBoxNoAutoFill(JComboBox jbox, Object[] values, Object initialValue) {
+    
+    
+    /**
+     * VERY NICE
+     * @param jbox
+     * @param values
+     * @param initialValue
+     * @return 
+     */
+    public static JComboBox fillComboBoxNoAutoFill(JComboBox jbox, Object[] values, String initialValue) {
         //
         ArrayList<Object> list = new ArrayList<Object>();
         //
-        if (initialValue != null) {
-            list.add(initialValue);
-        }
+//        if (initialValue != null) {
+//            list.add(initialValue);
+//        }
         //
         list.addAll(Arrays.asList(values));
         //
@@ -1754,7 +1763,19 @@ public class HelpMy {
         //
         jbox.setModel(new DefaultComboBoxModel(arr));
         //
-        jbox.setSelectedIndex(0);
+        for (int i = 0; i < jbox.getItemCount(); i++) {
+            //
+            String str = jbox.getItemAt(i).toString();
+            //
+            if (str == null || initialValue == null) {
+                jbox.setSelectedIndex(0);
+                continue;
+            }
+            //
+            if (str.regionMatches(0, initialValue, 0, initialValue.length())) {
+                jbox.setSelectedIndex(i);
+            }
+        }
         //
         return jbox;
     }
