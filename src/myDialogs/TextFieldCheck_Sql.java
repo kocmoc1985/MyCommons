@@ -20,7 +20,7 @@ import sql.SqlBasicLocal;
  *
  * @author KOCMOC
  */
-public class TextFieldCheck extends JTextField implements KeyListener {
+public class TextFieldCheck_Sql extends JTextField implements KeyListener {
 
     public SqlBasicLocal sql;
     private String entryExistQuery;
@@ -31,7 +31,7 @@ public class TextFieldCheck extends JTextField implements KeyListener {
     public static int ALREADY_EXIST_RESULT = 2;
     public int RESULT;
 
-    public TextFieldCheck(SqlBasicLocal sql, String q, String regex, int columns) {
+    public TextFieldCheck_Sql(SqlBasicLocal sql, String q, String regex, int columns) {
         this.sql = sql;
         this.entryExistQuery = q;
         this.regex = regex;
@@ -103,7 +103,7 @@ public class TextFieldCheck extends JTextField implements KeyListener {
             sql.prepareStatement(q);
             sql.getPreparedStatement().setString(1, val_1);
         } catch (SQLException ex) {
-            Logger.getLogger(TextFieldCheck.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TextFieldCheck_Sql.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -125,7 +125,7 @@ public class TextFieldCheck extends JTextField implements KeyListener {
             }
             //
         } catch (SQLException ex) {
-            Logger.getLogger(TextFieldCheck.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TextFieldCheck_Sql.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
         //

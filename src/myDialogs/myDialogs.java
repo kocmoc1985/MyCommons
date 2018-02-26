@@ -16,7 +16,7 @@ import javax.swing.JOptionPane;
 public class myDialogs {
 
     public static void main(String[] args) {
-        TextFieldCheck field_A = new TextFieldCheck(null,null,"\\d{5}",15);
+        TextFieldCheck_Sql field_A = new TextFieldCheck_Sql(null,null,"\\d{5}",15);
         boolean yesNo = chooseFromJTextFieldWithCheck(field_A, "Please type the code");
         
         String rst = field_A.getText();
@@ -27,7 +27,7 @@ public class myDialogs {
         
     }
 
-    public static boolean chooseFromJTextFieldWithCheck(TextFieldCheck tf, String msg) {
+    public static boolean chooseFromJTextFieldWithCheck(TextFieldCheck_Sql tf, String msg) {
         requestFocus(tf);
         return JOptionPane.showConfirmDialog(null, tf, msg, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
