@@ -83,6 +83,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import sql.SqlBasicLocal;
 import mySwing.JComboBoxA;
+import other.ComboBoxTitle;
 
 /**
  *
@@ -1645,6 +1646,40 @@ public class HelpMy {
         //
         if (val instanceof HelpMy.ComboBoxObject) {
             HelpMy.ComboBoxObject cbo = (HelpMy.ComboBoxObject) val;
+            return cbo.getParam_1(); // The "'" shall be remowed in feature!!!!!
+        }
+        //
+        return null;
+    }
+    
+    /**
+     * Returns nulls instead of 'NULLS'
+     *
+     * @param box
+     * @return
+     */
+    public static String getComboBoxSelectedValueB(JComboBox box) {
+        Object val = box.getSelectedItem();
+        //
+        if (val == null) {
+            return null;
+        }
+        //
+        if (val instanceof String) {
+            String v = (String) val;
+            if (v.isEmpty()) {
+                return null;
+            } else {
+                return v.toString();
+            }
+        }
+        //
+        if (val instanceof ComboBoxTitle) {
+            return null;
+        }
+        //
+        if (val instanceof ComboBoxObject) {
+            ComboBoxObject cbo = (ComboBoxObject) val;
             return cbo.getParam_1(); // The "'" shall be remowed in feature!!!!!
         }
         //
