@@ -28,16 +28,18 @@ public class Sql_B implements SqlBasicLocal {
     private Statement statement_2;
     private PreparedStatement p_statement;
     //
-    private boolean CREATE_STATEMENT_SIMPLE;
+    private final boolean CREATE_STATEMENT_SIMPLE;
     private int SQL_LOGIN_TIME_OUT = 60;
     //
-    private boolean LOGG_CONNECTION_STRING;
+    private final boolean LOGG_CONNECTION_STRING;
     //
     public boolean ODBC_OR_MDB;
     //
     public static String SQL_TYPE_MSSQL = "mssql";
     public static String SQL_TYPE_ORACLE = "oracle";
     public static String SQL_TYPE_MYSQL = "mysql";
+    public static String SQL_TYPE_MDB = "mdb";
+    public static String SQL_TYPE_ODBC = "odbc";
 
     public Sql_B(boolean statementSimple, boolean loggConnectionStr) {
         this.CREATE_STATEMENT_SIMPLE = statementSimple;
@@ -102,6 +104,8 @@ public class Sql_B implements SqlBasicLocal {
             connect_oracle(host, port, databaseName, userName, password);
         } else if (sqlType.equals(SQL_TYPE_MYSQL)) {
             connect_mysql(host, port, databaseName, userName, password);
+        } else if (sqlType.equals(SQL_TYPE_MDB)) {
+            connect_mdb_java_8(userName, password, databaseName);
         } else {
             JOptionPane.showMessageDialog(null, "SQL type not specified");
         }
@@ -227,6 +231,36 @@ public class Sql_B implements SqlBasicLocal {
     }
 
     /**
+     * This one is for having access to .mdb and .accdb files with Java8 OBS!
+     * For libraries look in folder lib -> mdbj8 (5 libraries) For the
+     * distribution this 5 libraries must all be in the "lib" folder!! Skip
+     * "mdbj8" folder!! As properties example see "freeq_mdbj8.properties"
+     *
+     * @param user
+     * @param pass
+     * @param pathToMdbFile
+     * @throws SQLException
+     */
+    public void connect_mdb_java_8(String user, String pass, String pathToMdbFile) throws SQLException {
+        //
+        ODBC_OR_MDB = true;
+        //
+        String connectionUrl = "jdbc:ucanaccess://" + pathToMdbFile;//jdbc:ucanaccess://C:/__tmp/test/zzz.accdb
+        //
+        logg_connection_string(connectionUrl);
+        //
+        connection = DriverManager.getConnection(connectionUrl, user, pass);
+        //
+        if (CREATE_STATEMENT_SIMPLE == false) { // 
+            statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            statement_2 = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        } else {
+            statement = connection.createStatement();
+            statement_2 = connection.createStatement();
+        }
+    }
+
+    /**
      * For connecting with ODBC. Fits for ACCESS databases also!! OBS!.
      * sun.jdbc.odbc.JdbcOdbcDriver is not supported in Java 1.8 it will throw
      * "java.lang.ClassNotFoundException: sun.jdbc.odbc.JdbcOdbcDriver"
@@ -234,6 +268,7 @@ public class Sql_B implements SqlBasicLocal {
      * @param user
      * @param pass
      * @param odbc
+     * @deprecated
      * @throws SQLException
      */
     public void connect_odbc(String user, String pass, String odbc) throws SQLException, ClassNotFoundException {
@@ -261,6 +296,7 @@ public class Sql_B implements SqlBasicLocal {
      * @param user
      * @param pass
      * @param pathToMdbFile
+     * @deprecated
      * @throws SQLException
      * @throws ClassNotFoundException
      */
