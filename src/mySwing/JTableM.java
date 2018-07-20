@@ -101,6 +101,10 @@ public class JTableM extends JTable implements TableColumnModelListener, MouseLi
     public String getTABLE_NAME() {
         return TABLE_NAME;
     }
+    
+    public void setTableBuild(){
+        TABLE_IS_BUILT = true;
+    }
 
     //==========================================================================
     private void checkTableName() throws TableNameNotSpecifiedException {
