@@ -4,7 +4,6 @@
  */
 package mySwing;
 
-import sql.SqlBasicLocal;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.AutoCompleteSupport;
@@ -18,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.border.Border;
 import other.CBoxParam;
 import statics.HelpMy;
+import sql.SqlBasic;
 
 /**
  * This instance of ComboBox is especially done for use with auto fill library
@@ -139,7 +139,7 @@ public class JComboBoxA extends JComboBox {
         fakeValuesMap.put("R", "DEVELOPMENT");
     }
 
-    public JComboBox fillComboBox(SqlBasicLocal sql, JComboBox jbox, String query,
+    public JComboBox fillComboBox(SqlBasic sql, JComboBox jbox, String query,
             Object initialValue, boolean showMultipleValues, boolean fakeValue) {
         //
         ArrayList<Object> list = new ArrayList<Object>();

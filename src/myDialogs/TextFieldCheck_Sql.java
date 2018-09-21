@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import sql.SqlBasicLocal;
+import sql.SqlBasic;
 
 /**
  *
@@ -22,7 +22,7 @@ import sql.SqlBasicLocal;
  */
 public class TextFieldCheck_Sql extends JTextField implements KeyListener {
 
-    public SqlBasicLocal sql;
+    public SqlBasic sql;
     private String entryExistQuery;
     private String regex;
     private final Font FONT_1 = new Font("Arial", Font.BOLD, 16);
@@ -31,7 +31,7 @@ public class TextFieldCheck_Sql extends JTextField implements KeyListener {
     public static int ALREADY_EXIST_RESULT = 2;
     public int RESULT;
 
-    public TextFieldCheck_Sql(SqlBasicLocal sql, String q, String regex, int columns) {
+    public TextFieldCheck_Sql(SqlBasic sql, String q, String regex, int columns) {
         this.sql = sql;
         this.entryExistQuery = q;
         this.regex = regex;
@@ -115,7 +115,7 @@ public class TextFieldCheck_Sql extends JTextField implements KeyListener {
         }
     }
     
-    public boolean entryExistsSql(SqlBasicLocal sql) {
+    public boolean entryExistsSql(SqlBasic sql) {
         try {
             //
             ResultSet rs = sql.getPreparedStatement().executeQuery();

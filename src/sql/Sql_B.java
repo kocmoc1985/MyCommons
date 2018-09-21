@@ -21,7 +21,7 @@ import other.SimpleLoggerLight;
  *
  * @author Administrator
  */
-public class Sql_B implements SqlBasicLocal {
+public class Sql_B implements SqlBasic {
 
     private Connection connection;
     private Statement statement;
@@ -35,11 +35,12 @@ public class Sql_B implements SqlBasicLocal {
     //
     public boolean ODBC_OR_MDB;
     //
-    public static String SQL_TYPE_MSSQL = "mssql";
-    public static String SQL_TYPE_ORACLE = "oracle";
-    public static String SQL_TYPE_MYSQL = "mysql";
-    public static String SQL_TYPE_MDB = "mdb";
-    public static String SQL_TYPE_ODBC = "odbc";
+    static public final String SQL_TYPE_MSSQL = "mssql";
+    static public final String SQL_TYPE_ORACLE = "oracle";
+    static public final String SQL_TYPE_MYSQL = "mysql";
+    static public final String SQL_TYPE_ODBC = "odbc";
+    static public final String SQL_TYPE_MDB = "mdb";
+    static public final String SQL_TYPE_MDB_OLD = "mdb_old";
 
     public Sql_B(boolean statementSimple, boolean loggConnectionStr) {
         this.CREATE_STATEMENT_SIMPLE = statementSimple;
@@ -86,32 +87,26 @@ public class Sql_B implements SqlBasicLocal {
         }
     }
 
-    /**
-     *
-     * @param sqlType
-     * @param host
-     * @param port
-     * @param databaseName
-     * @param userName
-     * @param password
-     * @throws ClassNotFoundException
-     * @throws SQLException
-     */
-    public void connect(String sqlType, String host, String port, String databaseName, String userName, String password) throws ClassNotFoundException, SQLException {
+    
+    public void connect(String sqlType, String host, String port, String dbNameOrPathToMdbFile, String userName, String password) throws ClassNotFoundException, SQLException, SqlTypeNotSpecifiedException {
         if (sqlType.equals(SQL_TYPE_MSSQL)) {
-            connect_jdbc(host, port, databaseName, userName, password);
+            connect_jdbc(host, port, dbNameOrPathToMdbFile, userName, password);
         } else if (sqlType.equals(SQL_TYPE_ORACLE)) {
-            connect_oracle(host, port, databaseName, userName, password);
+            connect_oracle(host, port, dbNameOrPathToMdbFile, userName, password);
         } else if (sqlType.equals(SQL_TYPE_MYSQL)) {
-            connect_mysql(host, port, databaseName, userName, password);
+            connect_mysql(host, port, dbNameOrPathToMdbFile, userName, password);
         } else if (sqlType.equals(SQL_TYPE_MDB)) {
-            connect_mdb_java_8(userName, password, databaseName);
+            connect_mdb_java_8(userName, password, dbNameOrPathToMdbFile);
+        } else if (sqlType.equals(SQL_TYPE_ODBC)) {
+            connect_odbc(userName, password, dbNameOrPathToMdbFile);
+        } else if (sqlType.equals(SQL_TYPE_MDB_OLD)) {
+            connect_mdb(userName, password, dbNameOrPathToMdbFile);
         } else {
-            JOptionPane.showMessageDialog(null, "SQL type not specified");
+            throw new SqlTypeNotSpecifiedException("SQL type not specified: " + sqlType);
         }
     }
 
-    public void connect_oracle(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
+    private void connect_oracle(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
         //
         //Name of .jar = ojdbc6.jar
         //
@@ -128,8 +123,13 @@ public class Sql_B implements SqlBasicLocal {
         //
         connection = DriverManager.getConnection(url);
         //
-        statement = connection.createStatement();
-        statement_2 = connection.createStatement();
+        if (CREATE_STATEMENT_SIMPLE == true) {
+            statement = connection.createStatement();
+            statement_2 = connection.createStatement();
+        } else {
+            statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            statement_2 = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        }
         //
         if (statement == null) {
             SimpleLoggerLight.logg("sql_conn.log", "Connection to: " + host + " / dbname: " + databaseName + " failed");
@@ -147,6 +147,7 @@ public class Sql_B implements SqlBasicLocal {
      * @param domain - is used only if named pipe are used
      * @param instance - shall not be null, if not used use ""
      * @throws SQLException
+     * @throws java.lang.ClassNotFoundException
      */
     public void connect_tds(String host, String port, String databaseName,
             String userName, String password, boolean useNamedPipes,
@@ -200,7 +201,7 @@ public class Sql_B implements SqlBasicLocal {
         }
     }
 
-    public void connect_jdbc(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
+    private void connect_jdbc(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
 
         //Class.forName("com.mysql.jdbc.Driver");
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
@@ -241,7 +242,7 @@ public class Sql_B implements SqlBasicLocal {
      * @param pathToMdbFile
      * @throws SQLException
      */
-    public void connect_mdb_java_8(String user, String pass, String pathToMdbFile) throws SQLException {
+    private void connect_mdb_java_8(String user, String pass, String pathToMdbFile) throws SQLException {
         //
         ODBC_OR_MDB = true;
         //
@@ -271,7 +272,7 @@ public class Sql_B implements SqlBasicLocal {
      * @deprecated
      * @throws SQLException
      */
-    public void connect_odbc(String user, String pass, String odbc) throws SQLException, ClassNotFoundException {
+    private void connect_odbc(String user, String pass, String odbc) throws SQLException, ClassNotFoundException {
         ODBC_OR_MDB = true;
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
         String connectionUrl = "jdbc:odbc:" + odbc;
@@ -300,7 +301,7 @@ public class Sql_B implements SqlBasicLocal {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    public void connect_mdb(String user, String pass, String pathToMdbFile) throws SQLException, ClassNotFoundException {
+    private void connect_mdb(String user, String pass, String pathToMdbFile) throws SQLException, ClassNotFoundException {
         ODBC_OR_MDB = true;
 
         //Class.forName("com.mysql.jdbc.Driver");
@@ -321,7 +322,7 @@ public class Sql_B implements SqlBasicLocal {
     }
 
     //    
-    public void connect_mysql(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
+    private void connect_mysql(String host, String port, String databaseName, String userName, String password) throws SQLException, ClassNotFoundException {
         Class.forName("com.mysql.jdbc.Driver");
 //            connection = DriverManager.getConnection("jdbc:mysql://195.178.232.239:3306/m09k2847","m09k2847","636363");
         connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + databaseName, userName, password);

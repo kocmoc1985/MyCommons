@@ -81,9 +81,9 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import sql.SqlBasicLocal;
 import mySwing.JComboBoxA;
 import other.ComboBoxTitle;
+import sql.SqlBasic;
 
 /**
  *
@@ -264,7 +264,7 @@ public class HelpMy {
         return box.isSelected();
     }
 
-    public static boolean columnExistsSqlTable(SqlBasicLocal sql, String colName, String tableName) {
+    public static boolean columnExistsSqlTable(SqlBasic sql, String colName, String tableName) {
         //
         String q = "select top 1 " + colName + " from " + tableName;
         //
@@ -278,7 +278,7 @@ public class HelpMy {
         //
     }
 
-    public static boolean entryExistsSql(SqlBasicLocal sql, String q) {
+    public static boolean entryExistsSql(SqlBasic sql, String q) {
         try {
             ResultSet rs = sql.execute(q);
             if (rs.next()) {
@@ -292,7 +292,7 @@ public class HelpMy {
         return false;
     }
 
-    public static String getSingleParamSql(SqlBasicLocal sql, String tableName,
+    public static String getSingleParamSql(SqlBasic sql, String tableName,
             String columnWhere, String valueWhere, String columnGet, boolean number) {
         //
         String q = "SELECT * from " + tableName
@@ -326,7 +326,7 @@ public class HelpMy {
         }
     }
 
-    public static String getLastIncrementedId(SqlBasicLocal sql, String tableName) {
+    public static String getLastIncrementedId(SqlBasic sql, String tableName) {
         //
         String q = "SELECT IDENT_CURRENT('" + tableName + "')";
         //
@@ -341,7 +341,7 @@ public class HelpMy {
         return null;
     }
 
-    public static int getRowCount(SqlBasicLocal sql, String tableName) {
+    public static int getRowCount(SqlBasic sql, String tableName) {
         String q = "SELECT COUNT(*) FROM " + tableName;
         int ammount = -1;
         //
@@ -360,7 +360,7 @@ public class HelpMy {
         return ammount;
     }
 
-    public static int getRowCount(SqlBasicLocal sql, String tableName, String whereCondition) {
+    public static int getRowCount(SqlBasic sql, String tableName, String whereCondition) {
         //
         String q = "SELECT COUNT(*) FROM " + tableName
                 + " where " + whereCondition;
@@ -537,7 +537,7 @@ public class HelpMy {
         return ret;
     }
 
-    public static int runProcedureIntegerReturn_A_2(SqlBasicLocal sql, String procedure) {
+    public static int runProcedureIntegerReturn_A_2(SqlBasic sql, String procedure) {
         CallableStatement proc;
         //
         try {
@@ -1358,7 +1358,7 @@ public class HelpMy {
      * @param fakeValue
      * @return 
      */
-    public static JComboBox fillComboBox_autofill_ext(SqlBasicLocal sql, JComboBox jbox, String query,
+    public static JComboBox fillComboBox_autofill_ext(SqlBasic sql, JComboBox jbox, String query,
             Object initialValue, boolean showMultipleValues, boolean fakeValue) {
         //
         ArrayList<Object> list = new ArrayList<Object>();
@@ -1449,7 +1449,7 @@ public class HelpMy {
     }
 
     
-    public static JComboBox fillComboBox(SqlBasicLocal sql, JComboBox jbox, String query,
+    public static JComboBox fillComboBox(SqlBasic sql, JComboBox jbox, String query,
             Object initialValue, boolean showMultipleValues, boolean fakeValue) {
         //
         ArrayList<Object> list = new ArrayList<Object>();
@@ -1560,7 +1560,7 @@ public class HelpMy {
         }
     }
 
-    public static JComboBox fillComboBox_no_autofill(SqlBasicLocal sql, JComboBox jbox, String query, Object initialValue) {
+    public static JComboBox fillComboBox_no_autofill(SqlBasic sql, JComboBox jbox, String query, Object initialValue) {
         //
         ArrayList<Object> list = new ArrayList<Object>();
         //
@@ -1598,7 +1598,7 @@ public class HelpMy {
      * @param query
      * @param sql
      */
-    public static void fillComboBox_with_wait(final JComboBoxA box, String query, SqlBasicLocal sql) {
+    public static void fillComboBox_with_wait(final JComboBoxA box, String query, SqlBasic sql) {
 
         if (HelpMy.fillAllowedComboBox(flagWait) == false) {
             return;

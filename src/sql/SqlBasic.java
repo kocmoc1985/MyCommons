@@ -14,7 +14,7 @@ import other.ShowMessage;
  *
  * @author KOCMOC
  */
-public interface SqlBasicLocal {
+public interface SqlBasic {
 
     /**
      *
